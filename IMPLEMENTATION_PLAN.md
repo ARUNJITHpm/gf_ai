@@ -193,7 +193,7 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 - [ ] **P4.9 Dogfood** — use the CLI on your real data for a few days; adjust prompts; add pinned facts and rules via admin.
 
-**Gate P4: ✅ 2026-10-09** ( tests; real evals on OpenAI gpt-4o-mini 10/10). CLI on your real data is P4.9. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
+**Gate P4: ✅ 2026-10-09** (158 tests; real evals on OpenAI gpt-4o-mini 10/10). CLI on your real data is P4.9. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
 
 ---
 
