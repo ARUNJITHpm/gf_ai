@@ -3,7 +3,7 @@
 *.db
 *.db-*
 *.sqlite
-exports/
+/exports/
 *.txt.zip
 backend/evals/data/
 spikes/**/dumps/
