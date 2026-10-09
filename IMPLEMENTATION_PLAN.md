@@ -193,7 +193,7 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 - [ ] **P4.9 Dogfood** — use the CLI on your real data for a few days; adjust prompts; add pinned facts and rules via admin.
 
-**Gate P4: FakeLLM half ✅ 2026-10-09** (160 tests). The manual real-model half (P4.8 evals, CLI on real data) is pending your API key. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
+**Gate P4: FakeLLM half ✅ 2026-10-09** (155 tests). The manual real-model half (P4.8 evals, CLI on real data) is pending your API key. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
 
 ---
 
