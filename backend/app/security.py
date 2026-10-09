@@ -50,7 +50,9 @@ class RateLimiter:
             return True
 
     def __call__(self, request: Request) -> None:
-        key = request.client.host if request.client else "unknown"
+        # Keyed per app instance too, so separate apps (e.g. in tests) don't share buckets.
+        host = request.client.host if request.client else "unknown"
+        key = f"{id(request.app)}:{host}"
         if not self.allow(key):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,

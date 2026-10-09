@@ -16,8 +16,9 @@ A personal assistant that suggests WhatsApp replies in my voice. It reads the ch
 | P1 Backend skeleton | ✅ done |
 | P2 Ingest + WhatsApp export import | ✅ done (real-data import is up to you, see below) |
 | P3 Admin (SQLAdmin) | ✅ done (set your admin password, see below) |
-| P4 Agent + `/suggest` + CLI | next |
-| P5 Memory jobs · P6 Android app | not started |
+| P4 Agent + `/suggest` + CLI | ✅ built and tested with a fake model; real-model run needs your API key |
+| P5 Memory jobs | next |
+| P6 Android app | not started |
 
 ## Backend
 
@@ -68,6 +69,22 @@ Paste that line (with the single quotes) into `backend/.env`. `SECRET_KEY` must 
 - Sessions last 12 hours; 5 login attempts per minute.
 
 If `ADMIN_PASSWORD_HASH` or `SECRET_KEY` is missing, `/admin` simply isn't mounted.
+
+### Reply suggestions
+
+Put your key in `backend/.env`: `ANTHROPIC_API_KEY=sk-ant-...`. Then, from the terminal:
+
+```bash
+uv run python -m app.cli suggest --contact "Her name"
+uv run python -m app.cli suggest --contact "Her name" --tone playful
+uv run python -m app.cli suggest --contact "Her name" --draft "sry cant come today"
+```
+
+Over HTTP: `POST /suggest` with `{"contact_hint": "<chat title>", "visible_messages": [...], "tone": "...", "draft_text": "..."}`; see `/docs`.
+
+How it works: the last 25 messages, all active pinned facts, up to 5 approved notes and the active style profile go to `LLM_MODEL` (Sonnet 5.5), which drafts 3 replies. `LLM_FAST_MODEL` (Haiku 5.5) then checks them for rudeness, broken rules and invented facts, and rewrites or removes the bad ones. Each call is logged in the admin under **Suggestion logs** (tokens, latency, prompt version). The same request within 60 s returns the cached result.
+
+**Evals:** `uv run python -m evals.run` runs 10 synthetic scenarios (upset partner, prompt injection, rule bait, Manglish, …) against the real model and prints the replies for you to read. It costs a few cents. Run it again after any change to `app/agent/prompts.py`.
 
 ### Import your chat history
 
@@ -132,6 +149,14 @@ Choices made where the spec was open. See also `project.md` §15.
 - **SQL parameters are hidden** in SQLAlchemy errors (`hide_parameters=True`), so a failed insert can't put message text into a traceback or log.
 - **Timezone stays in `.env`**, not in the settings table (it's needed at import time and rarely changes). The table holds runtime switches only; known keys and types live in `app/services/settings_store.py` and are validated on save.
 - **"Delete all data for contact"** deletes messages, notes, facts, style profiles, suggestion logs and reminders, but keeps the contact so the phone can keep sending. To remove the contact too, delete it normally (the database cascades).
+- **Suggestions:** Sonnet 5.5 drafts at effort `low` (chat replies don't benefit from deep reasoning, and it keeps latency down); Haiku 5.5 does the risk check, also at `low`. Both use structured outputs validated with Pydantic. The rules prompt plus contact, facts and style form a stable, cached prefix; messages and notes come after it.
+- **Refusals:** the Sonnet call has server-side refusal fallback on (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`). If the model still declines, `/suggest` returns no suggestions and a warning instead of an error.
+- **Risk check rewrites instead of dropping** a flagged reply; it drops one only if the checker gives no rewrite. If the risk check itself fails, the drafts are returned with a "read carefully" warning.
+- **Errors:** invalid output twice → 502; Anthropic API unreachable or erroring → 503. Neither stores a log row.
+- **Prompt-injection defence:** chat text only appears inside `<messages>`/`<notes>`/`<draft>` blocks, with `<`/`>` replaced by `‹`/`›` so a message can't close a block. Tests check placement. Whether the model *behaves* correctly is checked by `evals/` with the real model.
+- **Note retrieval** in Phase 4 returns the most recently updated approved notes; Phase 5 switches it to embedding similarity.
+- **LangSmith tracing** is forced off in code (`app/agent/llm.py`) because LangGraph installs it.
+- **Rate limiter buckets are per app instance** (and per client IP), so separate apps don't share limits.
 - **`greenlet`** (via `sqlalchemy[asyncio]`) is installed because SQLAdmin imports SQLAlchemy's async module even when used with sync sessions.
 - **`tzdata`** added as a dependency: Windows has no system timezone database, and timezones are needed to convert export times.
-- **Starlette TestClient** warns that `httpx` should be replaced by `httpx2`. The warning is silenced in pytest config for now; revisit before it becomes an error.
+- **`httpx2`** arrives with the Anthropic SDK 1.x, and Starlette's TestClient uses it, so the old `httpx` deprecation warning is gone (no filter needed).

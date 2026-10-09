@@ -4,6 +4,7 @@ add-contact   --name NAME --title "Chat title" [--title ...]
 list-contacts
 import        --file chat.zip --contact NAME_OR_ID --me "My Name" --them "Her Name"
 hash-password (prompts; prints the ADMIN_PASSWORD_HASH line for .env)
+suggest       --contact NAME_OR_ID [--tone warm] [--draft "my draft"]   (calls the real model)
 """
 
 import argparse
@@ -16,12 +17,15 @@ import bcrypt
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app.agent.llm import AnthropicLLM, LLMClient, LLMError
+from app.agent.nodes import DraftFailed
+from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
 from app.logging_utils import configure_logging
-from app.models import Contact, Message
+from app.models import Contact, Message, SuggestionLog
 from app.services.export_parser import DateOrder, ExportParseError
 from app.services.importer import import_export, read_export_text
+from app.services.suggest import suggest_replies
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
 
     commands.add_parser("hash-password", help="hash an admin password for .env")
 
+    sug = commands.add_parser("suggest", help="get reply suggestions (calls the Anthropic API)")
+    sug.add_argument("--contact", required=True, help="contact name or id")
+    sug.add_argument("--tone", help="e.g. warm, playful, apologetic (default: setting)")
+    sug.add_argument("--draft", help="improve this draft instead of writing fresh replies")
+
     args = parser.parse_args(argv)
     if args.command == "hash-password":
         return _hash_password()  # needs no settings or database
@@ -63,6 +72,8 @@ def main(argv: list[str] | None = None) -> int:
                 return _add_contact(session, args.name, args.title)
             if args.command == "list-contacts":
                 return _list_contacts(session)
+            if args.command == "suggest":
+                return _suggest(session, args, settings)
             return _import(session, args, settings.tz)
     finally:
         engine.dispose()
@@ -141,3 +152,38 @@ def _import(session: Session, args: argparse.Namespace, tz: ZoneInfo) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+def _suggest(
+    session: Session, args: argparse.Namespace, settings: Settings, llm: LLMClient | None = None
+) -> int:
+    contact = _find_contact(session, args.contact)
+    if contact is None:
+        print(f"error: no contact {args.contact!r}; see list-contacts", file=sys.stderr)
+        return 1
+    if llm is None:
+        key = settings.anthropic_api_key
+        llm = AnthropicLLM(api_key=key.get_secret_value() if key else None)
+    try:
+        result = suggest_replies(
+            session, contact, llm=llm, settings=settings, tone=args.tone, draft_text=args.draft
+        )
+    except (DraftFailed, LLMError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    log = session.get(SuggestionLog, result.suggestion_id) if result.suggestion_id else None
+    for i, s in enumerate(result.suggestions, start=1):
+        print(f"\n[{i}] ({s['tone']}) {s['text']}")
+        print(f"    why: {s['reason']}")
+        if s["used_fact_ids"] or s["used_note_ids"]:
+            print(f"    uses: facts {s['used_fact_ids']} notes {s['used_note_ids']}")
+    for warning in result.warnings:
+        print(f"\n! {warning}")
+    if log is not None:
+        cached = " (cached)" if result.cached else ""
+        print(
+            f"\nsuggestion #{log.id}{cached}: {log.latency_ms} ms, "
+            f"{log.input_tokens} in / {log.output_tokens} out tokens, model {log.model}"
+        )
+    return 0

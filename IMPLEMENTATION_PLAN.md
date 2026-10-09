@@ -167,33 +167,33 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 ## Phase 4 — Agent, `/suggest`, CLI
 
-- [ ] **P4.1 LLM wrapper**
+- [x] **P4.1 LLM wrapper**
   - Files: `app/agent/llm.py`
   - Do: `LLMClient` protocol: `complete_json(model, system, messages, schema, cache_prefix) -> (parsed, usage)`. `AnthropicLLM` (structured output / forced tool-use, prompt caching on the stable prefix, timeout, 1 network retry). `FakeLLM` that returns queued responses and records prompts.
   - Done when: FakeLLM tests; a manual smoke script hits the real API once.
 
-- [ ] **P4.2 Prompts**
+- [x] **P4.2 Prompts**
   - Files: `app/agent/prompts.py`
   - Do: `PROMPT_VERSION`, system prompts for draft and risk check, and builder functions that render pinned facts, notes, style, and messages inside delimited data blocks (§8).
   - Done when: snapshot tests of rendered prompts with fixture data.
 
-- [ ] **P4.3 Output schemas** — Pydantic `Draft`, `DraftSet` (exactly 3), `RiskVerdict`; validator for `used_*_ids` ⊆ given ids.
-- [ ] **P4.4 Nodes + graph**
+- [x] **P4.3 Output schemas** — Pydantic `Draft`, `DraftSet` (exactly 3), `RiskVerdict`; validator for `used_*_ids` ⊆ given ids.
+- [x] **P4.4 Nodes + graph**
   - Files: `app/agent/state.py`, `nodes.py`, `graph.py`
   - Do: `load_context`, `retrieve_notes` (stub returning approved notes by recency until P5), `draft` (retry once), `risk_check` (rewrite), `log`.
   - Done when: graph runs end-to-end with FakeLLM in a test.
 
-- [ ] **P4.5 `/suggest` endpoint** — ingest visible messages, pause check, cache by context hash, rate limit, run graph, return §7 shape.
-- [ ] **P4.6 Agent tests** (all with FakeLLM) — every bullet in §13 Phase 4 "Accept (FakeLLM)".
-- [ ] **P4.7 CLI suggest** — `python -m app.cli suggest --contact X [--tone warm] [--draft "..."]` prints suggestions, reasons, warnings, tokens, latency.
-- [ ] **P4.8 Eval set**
+- [x] **P4.5 `/suggest` endpoint** — ingest visible messages, pause check, cache by context hash, rate limit, run graph, return §7 shape.
+- [x] **P4.6 Agent tests** (all with FakeLLM) — every bullet in §13 Phase 4 "Accept (FakeLLM)".
+- [x] **P4.7 CLI suggest** — `python -m app.cli suggest --contact X [--tone warm] [--draft "..."]` prints suggestions, reasons, warnings, tokens, latency.
+- [ ] **P4.8 Eval set** (harness + 10 cases built; needs a real-model run with your API key)
   - Files: `evals/cases.yaml`, `evals/run.py`
   - Do: ~10 synthetic scenarios (upset partner, plans, inside joke, prompt injection in her message, rule violation bait). Runner calls the real model and prints results for eyeballing.
   - Done when: you've run it and are happy with the outputs; note `PROMPT_VERSION`.
 
 - [ ] **P4.9 Dogfood** — use the CLI on your real data for a few days; adjust prompts; add pinned facts and rules via admin.
 
-**Gate P4:** §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
+**Gate P4: FakeLLM half ✅ 2026-10-09** (160 tests). The manual real-model half (P4.8 evals, CLI on real data) is pending your API key. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
 
 ---
 

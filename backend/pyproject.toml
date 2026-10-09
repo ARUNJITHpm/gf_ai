@@ -5,9 +5,11 @@ description = "Backend for the WhatsApp reply assistant"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
+    "anthropic>=1.13.0",
     "bcrypt>=5.0.0",
     "fastapi>=0.143.0",
     "itsdangerous>=2.2.0",
+    "langgraph>=1.2.14",
     "pydantic-settings>=2.15.0",
     "python-multipart>=0.0.32",
     "sqladmin>=0.32.0",
@@ -47,6 +49,4 @@ testpaths = ["tests"]
 addopts = "-q"
 filterwarnings = [
     "error",
-    # Starlette's TestClient wants httpx2; switch when we decide on that dependency.
-    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
 ]

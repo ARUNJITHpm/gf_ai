@@ -86,3 +86,32 @@ def test_hash_password_rejects_mismatch_and_short(
     monkeypatch.setattr(cli.getpass, "getpass", lambda prompt="": next(answers))
     assert cli.main(["hash-password"]) == 1
     assert cli.main(["hash-password"]) == 1
+
+
+def test_suggest_prints_replies(capsys: pytest.CaptureFixture[str]) -> None:
+    from argparse import Namespace
+
+    from app.agent.llm import FakeLLM
+    from app.agent.schemas import DraftReply, DraftSet, RiskReport, RiskVerdict
+    from app.db import create_db_engine, create_session_factory
+
+    cli.main(["add-contact", "--name", "Sam", "--title", "Sam"])
+    capsys.readouterr()
+    fake = FakeLLM()
+    reply = DraftReply(
+        text="hey you", tone="warm", reason="short", used_fact_ids=[], used_note_ids=[]
+    )
+    fake.queue(DraftSet, DraftSet(replies=[reply, reply, reply]))
+    fake.queue(
+        RiskReport, RiskReport(verdicts=[RiskVerdict(index=0, ok=True, problem="", rewrite="")])
+    )
+
+    settings = get_settings()
+    engine = create_db_engine(settings.database_url)
+    with create_session_factory(engine)() as session:
+        args = Namespace(contact="Sam", tone=None, draft=None)
+        assert cli._suggest(session, args, settings, llm=fake) == 0
+    engine.dispose()
+    out = capsys.readouterr().out
+    assert out.count("hey you") == 3
+    assert "suggestion #1:" in out
