@@ -3,6 +3,7 @@
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, SecretStr, field_validator
@@ -30,8 +31,10 @@ class Settings(BaseSettings):
     # Shared secret the Android app sends in the X-API-Key header.
     api_key: SecretStr = Field(min_length=16)
 
-    # Needed from Phase 4 (agent) onwards.
+    # Needed from Phase 4 (agent) onwards. LLM_PROVIDER picks which API key is used.
+    llm_provider: Literal["anthropic", "openai"] = "anthropic"
     anthropic_api_key: SecretStr | None = None
+    openai_api_key: SecretStr | None = None
     llm_model: str = "claude-sonnet-5-5"
     llm_fast_model: str = "claude-haiku-5-5"
     embedding_model: str = "intfloat/multilingual-e5-small"

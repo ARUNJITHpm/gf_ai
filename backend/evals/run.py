@@ -3,7 +3,7 @@
     uv run python -m evals.run              # all cases
     uv run python -m evals.run upset manglish
 
-Needs ANTHROPIC_API_KEY in backend/.env. Read the output; automatic checks only catch the
+Needs the API key for LLM_PROVIDER in backend/.env. Read the output; automatic checks only catch the
 obvious failures (forbidden words, wrong count).
 """
 
@@ -12,9 +12,10 @@ import tempfile
 from datetime import timedelta
 from pathlib import Path
 
-from app.agent.llm import AnthropicLLM, LLMError
+from app.agent.llm import LLMClient, LLMError, make_llm
 from app.agent.nodes import DraftFailed
 from app.agent.prompts import PROMPT_VERSION
+from app.cli import use_utf8_console
 from app.config import get_settings
 from app.db import create_db_engine, create_session_factory
 from app.models import Base, Contact, MemoryNote, PinnedFact, StyleProfile, SuggestionLog
@@ -26,7 +27,7 @@ from app.services.suggest import suggest_replies
 from evals.cases import CASES, Case
 
 
-def run_case(case: Case, llm: AnthropicLLM, db_dir: Path) -> bool:
+def run_case(case: Case, llm: LLMClient, db_dir: Path) -> bool:
     settings = get_settings().model_copy(
         update={"database_url": f"sqlite:///{(db_dir / f'{case.name}.db').as_posix()}"}
     )
@@ -104,12 +105,15 @@ def run_case(case: Case, llm: AnthropicLLM, db_dir: Path) -> bool:
 
 
 def main(names: list[str]) -> int:
+    use_utf8_console()
     settings = get_settings()
-    key = settings.anthropic_api_key
-    llm = AnthropicLLM(api_key=key.get_secret_value() if key else None)
+    llm = make_llm(settings)
     cases = [c for c in CASES if not names or c.name in names]
-    print(f"prompt {PROMPT_VERSION}, models {settings.llm_model} + {settings.llm_fast_model}")
-    with tempfile.TemporaryDirectory() as tmp:
+    print(
+        f"prompt {PROMPT_VERSION}, {settings.llm_provider}: "
+        f"{settings.llm_model} + {settings.llm_fast_model}"
+    )
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         results = {case.name: run_case(case, llm, Path(tmp)) for case in cases}
     passed = sum(results.values())
     print(f"\nautomatic checks: {passed}/{len(results)} passed (still read the replies)")

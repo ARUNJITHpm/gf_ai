@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.143.0",
     "itsdangerous>=2.2.0",
     "langgraph>=1.2.14",
+    "openai>=3.27.0",
     "pydantic-settings>=2.15.0",
     "python-multipart>=0.0.32",
     "sqladmin>=0.32.0",

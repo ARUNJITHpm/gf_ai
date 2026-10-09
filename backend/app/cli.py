@@ -9,6 +9,7 @@ suggest       --contact NAME_OR_ID [--tone warm] [--draft "my draft"]   (calls t
 
 import argparse
 import getpass
+import io
 import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -17,7 +18,7 @@ import bcrypt
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.agent.llm import AnthropicLLM, LLMClient, LLMError
+from app.agent.llm import LLMClient, LLMError, make_llm
 from app.agent.nodes import DraftFailed
 from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
@@ -28,7 +29,15 @@ from app.services.importer import import_export, read_export_text
 from app.services.suggest import suggest_replies
 
 
+def use_utf8_console() -> None:
+    """Windows consoles default to cp1252, which can't print emoji from chats."""
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    use_utf8_console()
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -162,8 +171,7 @@ def _suggest(
         print(f"error: no contact {args.contact!r}; see list-contacts", file=sys.stderr)
         return 1
     if llm is None:
-        key = settings.anthropic_api_key
-        llm = AnthropicLLM(api_key=key.get_secret_value() if key else None)
+        llm = make_llm(settings)
     try:
         result = suggest_replies(
             session, contact, llm=llm, settings=settings, tone=args.tone, draft_text=args.draft

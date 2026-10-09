@@ -1,4 +1,4 @@
-"""The only place that talks to the Anthropic API.
+"""The only place that talks to an LLM API (Anthropic or OpenAI, see LLM_PROVIDER).
 
 Everything else uses the `LLMClient` protocol, so tests run on `FakeLLM` and never touch
 the network.
@@ -10,10 +10,13 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
 import anthropic
+import openai
 from anthropic.types.beta import BetaOutputConfigParam
 from pydantic import BaseModel
 
-# Message text must not leave the machine except to the Anthropic API (spec §2, §12).
+from app.config import Settings
+
+# Message text must not leave the machine except to the chosen LLM API (spec §2, §12).
 # LangGraph pulls in LangSmith; force its tracing off regardless of the environment.
 for _var in ("LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2", "LANGCHAIN_TRACING"):
     os.environ[_var] = "false"
@@ -131,6 +134,83 @@ class AnthropicLLM:
                 cache_write_tokens=usage.cache_creation_input_tokens or 0,
             ),
         )
+
+
+class OpenAILLM:
+    """OpenAI Chat Completions with structured outputs (Pydantic `response_format`).
+
+    `effort` is ignored: non-reasoning models such as gpt-4o-mini have no such setting.
+    OpenAI caches long identical prompt prefixes automatically, so the stable system text
+    goes first as one system message.
+    """
+
+    def __init__(self, api_key: str | None, timeout: float = 30.0, max_retries: int = 1) -> None:
+        kwargs: dict[str, Any] = {"timeout": timeout, "max_retries": max_retries}
+        if api_key:
+            kwargs["api_key"] = api_key
+        self._client = openai.OpenAI(**kwargs)
+
+    def complete_json[T: BaseModel](
+        self,
+        *,
+        model: str,
+        system: Sequence[str],
+        prompt: str,
+        schema: type[T],
+        effort: Effort,
+        max_tokens: int,
+    ) -> LLMResult[T]:
+        messages: list[dict[str, str]] = []
+        if system:
+            messages.append({"role": "system", "content": "\n\n".join(system)})
+        messages.append({"role": "user", "content": prompt})
+        try:
+            completion = self._client.chat.completions.parse(
+                model=model,
+                messages=messages,  # type: ignore[arg-type]
+                response_format=schema,
+                max_completion_tokens=max_tokens,
+            )
+        except (openai.LengthFinishReasonError, openai.ContentFilterFinishReasonError):
+            return LLMResult(parsed=None, stop_reason="invalid_output", model=model)
+        except openai.APIConnectionError as exc:
+            raise LLMError("could not reach the OpenAI API") from exc
+        except openai.APIStatusError as exc:
+            raise LLMError(f"OpenAI API error {exc.status_code}") from exc
+        except openai.OpenAIError as exc:
+            raise LLMError(type(exc).__name__) from exc
+        except ValueError:
+            return LLMResult(parsed=None, stop_reason="invalid_output", model=model)
+
+        choice = completion.choices[0]
+        usage = Usage()
+        if completion.usage is not None:
+            details = completion.usage.prompt_tokens_details
+            cached = (details.cached_tokens or 0) if details else 0
+            usage = Usage(
+                input_tokens=completion.usage.prompt_tokens - cached,
+                output_tokens=completion.usage.completion_tokens,
+                cache_read_tokens=cached,
+            )
+        if choice.message.refusal:
+            return LLMResult(
+                parsed=None, stop_reason="refusal", model=completion.model, usage=usage
+            )
+        return LLMResult(
+            parsed=choice.message.parsed,
+            stop_reason=choice.finish_reason,
+            model=completion.model,
+            usage=usage,
+        )
+
+
+def make_llm(settings: Settings) -> LLMClient:
+    """The real client for the configured provider."""
+    if settings.llm_provider == "openai":
+        key = settings.openai_api_key
+        return OpenAILLM(api_key=key.get_secret_value() if key else None)
+    anthropic_key = settings.anthropic_api_key
+    return AnthropicLLM(api_key=anthropic_key.get_secret_value() if anthropic_key else None)
 
 
 @dataclass

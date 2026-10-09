@@ -32,12 +32,12 @@ Backend
 - SQLAlchemy 2.x (**sync** sessions — simpler, single user) + Alembic (`render_as_batch=True`, required for SQLite ALTERs), SQLite file DB
 - Embeddings: `fastembed` (local) with a **multilingual** model, default `intfloat/multilingual-e5-small` (configurable via `EMBEDDING_MODEL`). Chats are often mixed-language; the English-only default model would retrieve poorly.
 - Vector search: embeddings stored as `float32` BLOBs, brute-force cosine similarity with numpy (a few thousand notes at most — this is fast enough). `sqlite-vec` is an optional later upgrade behind the same `retrieval.py` interface.
-- LLM: Anthropic Python SDK.
+- LLM: switchable with `LLM_PROVIDER` (`openai` or `anthropic`); currently OpenAI `gpt-4o-mini` for both roles. Anthropic Python SDK / OpenAI Python SDK.
   - `LLM_MODEL` (default `claude-sonnet-5-5`) for drafting replies.
   - `LLM_FAST_MODEL` (default `claude-haiku-5-5`) for risk check, extraction, promise detection, summarization.
   - Use structured outputs (or forced tool-use) and validate with Pydantic.
   - Use prompt caching on the stable prefix (system prompt + pinned facts + style profile).
-- Agent orchestration: LangGraph. **LangSmith tracing must be off** (`LANGCHAIN_TRACING_V2` unset/false) — message text must not leave the machine except to the Anthropic API.
+- Agent orchestration: LangGraph. **LangSmith tracing must be off** (`LANGCHAIN_TRACING_V2` unset/false) — message text must not leave the machine except to the configured LLM API.
 - Admin UI: SQLAdmin (with login), no custom frontend
 - Scheduler: APScheduler (in-process `BackgroundScheduler`)
 - Auth helpers: `bcrypt`, `itsdangerous` (session cookie for SQLAdmin)

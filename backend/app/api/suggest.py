@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.agent.llm import AnthropicLLM, LLMClient, LLMError
+from app.agent.llm import LLMClient, LLMError, make_llm
 from app.agent.nodes import DraftFailed
 from app.config import Settings
 from app.db import get_session
@@ -21,8 +21,7 @@ def get_llm(request: Request) -> LLMClient:
     llm: LLMClient | None = getattr(request.app.state, "llm", None)
     if llm is None:
         settings: Settings = request.app.state.settings
-        key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else None
-        llm = AnthropicLLM(api_key=key)
+        llm = make_llm(settings)
         request.app.state.llm = llm
     return llm
 

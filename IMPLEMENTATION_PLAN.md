@@ -186,14 +186,14 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 - [x] **P4.5 `/suggest` endpoint** — ingest visible messages, pause check, cache by context hash, rate limit, run graph, return §7 shape.
 - [x] **P4.6 Agent tests** (all with FakeLLM) — every bullet in §13 Phase 4 "Accept (FakeLLM)".
 - [x] **P4.7 CLI suggest** — `python -m app.cli suggest --contact X [--tone warm] [--draft "..."]` prints suggestions, reasons, warnings, tokens, latency.
-- [ ] **P4.8 Eval set** (harness + 10 cases built; needs a real-model run with your API key)
+- [x] **P4.8 Eval set** (10 cases; first real run 2026-10-09 on gpt-4o-mini: 10/10 automatic checks, ~2.8–6.9 s)
   - Files: `evals/cases.yaml`, `evals/run.py`
   - Do: ~10 synthetic scenarios (upset partner, plans, inside joke, prompt injection in her message, rule violation bait). Runner calls the real model and prints results for eyeballing.
   - Done when: you've run it and are happy with the outputs; note `PROMPT_VERSION`.
 
 - [ ] **P4.9 Dogfood** — use the CLI on your real data for a few days; adjust prompts; add pinned facts and rules via admin.
 
-**Gate P4: FakeLLM half ✅ 2026-10-09** (155 tests). The manual real-model half (P4.8 evals, CLI on real data) is pending your API key. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
+**Gate P4: ✅ 2026-10-09** ( tests; real evals on OpenAI gpt-4o-mini 10/10). CLI on your real data is P4.9. §13 Phase 4 checks pass. *You now have a working assistant from the terminal.*
 
 ---
 
