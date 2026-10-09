@@ -44,7 +44,7 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
   - Do: from the service, find the input `EditText` and call `ACTION_SET_TEXT` with "test from spike". Do **not** touch the send button.
   - Done when: the text appears in WhatsApp's box and can be edited/sent by hand.
 
-- [x] **P0.5 Notification spike** (group flag not tested — no group on test number; covered in P6.4)
+- [x] **P0.5 Notification spike**
   - Do: add a `NotificationListenerService`, log `EXTRA_TITLE`, `EXTRA_MESSAGES` (sender, text, time) and `EXTRA_IS_GROUP_CONVERSATION` for `com.whatsapp`.
   - Done when: a message from a test contact appears in logcat with its timestamp. Save a few redacted log samples to `spikes/notes.md` — they become test fixtures in P6.
 
@@ -228,7 +228,7 @@ Split into four shippable sub-phases. Reuse the P0 spike learnings; start a clea
 - Done when: Test connection succeeds from the phone over mobile data.
 
 ### 6b — Notification ingest + outbox
-- [ ] **P6.4** `NotificationListenerService`: parse `MessagingStyle`, filter per §11, map senders. Verify `EXTRA_IS_GROUP_CONVERSATION` with a real group message (not covered in P0).
+- [ ] **P6.4** `NotificationListenerService`: parse `MessagingStyle`, filter per §11, map senders. Filter groups with `EXTRA_IS_GROUP_CONVERSATION` first (group titles carry a changing "(N messages)" suffix, see `spikes/notes.md`).
 - [ ] **P6.5** Room outbox + WorkManager retry with backoff.
 - [ ] **P6.6** Unit tests for notification parsing using P0.5 samples.
 - Done when: a message from her shows up in the admin Message view; with backend stopped, it arrives after restart.

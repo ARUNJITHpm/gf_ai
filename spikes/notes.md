@@ -51,13 +51,15 @@ FrameLayout id=send_container / ImageButton id=voice_note_btn       # never touc
 - `ACTION_SET_TEXT` on `id/entry` → `ok=true`
 - Nothing sent automatically
 
-## P0.5 Notifications — PASS (group flag deferred to P6.4)
+## P0.5 Notifications — PASS
 - MessagingStyle present: **yes**
 - Per-message timestamps: **yes** (`msg time` is the send time in epoch ms; `postTime` is ~1 s later)
 - Sender name: **yes** (the contact's saved name); `user` = "You"
 - Each message also posts a **group summary** notification (`summary=true`, no MessagingStyle) → ignore
 - Multi-message re-post: **confirmed**. The 2nd notification reuses the same `key` and re-lists message 1 with an identical `msg time` → dedupe on (sender, text, time) is reliable for this source
-- Group flag works: _not tested (no group on test number) — verify with a fixture in P6.4_
+- Group flag works: **yes**. Group messages have `groupConv=true`; 1:1 chats have `false`
+- Group `title`/`convTitle` change with every message ("<group> (N messages): <sender>") → never match chats by title alone; filter on the group flag first
+- Each conversation has its own stable notification `key` (group key ≠ 1:1 key); the summary notification's title is just "WhatsApp"
 
 ```
 POSTED summary=false groupConv=false title=<t>
@@ -74,10 +76,19 @@ POSTED summary=false groupConv=false title=<t> text=<19ch>
   user=<u> messages=2
   msg time=1791563041000 sender=<n> text=<18ch>     # re-listed, same timestamp
   msg time=1791563059000 sender=<n> text=<19ch>
+
+# group chat (3rd message; earlier ones re-listed)
+POSTED summary=false groupConv=true title="<group> (3 messages): <n>" convTitle="<group> (3 messages)"
+  user=<u> messages=3
+  msg time=1791563214000 sender=<n> text=<22ch>
+  msg time=1791563218000 sender=<n> text=<5ch>
+  msg time=1791563228000 sender=<n> text=<8ch>
+POSTED summary=true groupConv=false title="WhatsApp" convTitle="null"
+  (no MessagingStyle)
 ```
 
 ## Verdict
 - [x] P0.3 screen reading
 - [x] P0.4 text insert
-- [x] P0.5 notifications (group flag check deferred to P6.4)
+- [x] P0.5 notifications (incl. group flag)
 - [x] Gate P0 passed, go to Phase 1
