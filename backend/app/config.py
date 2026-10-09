@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     admin_user: str = "admin"
     admin_password_hash: SecretStr | None = None
     secret_key: SecretStr | None = None
+    # Mark the admin session cookie Secure. Turn on when served over HTTPS (tailscale serve).
+    admin_https_only: bool = False
 
     database_url: str = Field(default_factory=default_database_url)
     timezone: str = "UTC"

@@ -1,9 +1,10 @@
 from typing import Any
 
 from sqlalchemy import JSON, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
+from app.models.contact import Contact
 
 
 class SuggestionLog(TimestampMixin, Base):
@@ -12,6 +13,7 @@ class SuggestionLog(TimestampMixin, Base):
     __tablename__ = "suggestion_log"
 
     contact_id: Mapped[int] = mapped_column(ForeignKey("contact.id", ondelete="CASCADE"))
+    contact: Mapped[Contact] = relationship()
     context_hash: Mapped[str] = mapped_column(String(64), index=True)
     request: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)  # ids only, no text
     suggestions: Mapped[list[Any]] = mapped_column(JSON, default=list)

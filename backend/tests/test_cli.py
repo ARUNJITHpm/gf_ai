@@ -1,10 +1,11 @@
 from pathlib import Path
 
+import bcrypt
 import pytest
 from sqlalchemy import create_engine
 
 from app import cli
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.models import Base
 
 FIXTURES = Path(__file__).parent / "fixtures" / "exports"
@@ -58,3 +59,30 @@ def test_import_errors_are_friendly(capsys: pytest.CaptureFixture[str]) -> None:
         cli.main(["import", "--file", "x.txt", "--contact", "Nobody", "--me", "a", "--them", "b"])
         == 1
     )
+
+
+def test_hash_password_output_works_in_env_file(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    answers = iter(["a-long-password", "a-long-password"])
+    monkeypatch.setattr(cli.getpass, "getpass", lambda prompt="": next(answers))
+    assert cli.main(["hash-password"]) == 0
+    line = capsys.readouterr().out.strip().splitlines()[-1]
+    assert line.startswith("ADMIN_PASSWORD_HASH='$2")
+
+    # The printed line, pasted into .env, must load back unchanged ("$" not expanded).
+    env = tmp_path / ".env"
+    env.write_text(f"API_KEY=cli-test-key-0123456789\n{line}\n", encoding="utf-8")
+    loaded = Settings(_env_file=env)  # type: ignore[call-arg]
+    assert loaded.admin_password_hash is not None
+    stored = loaded.admin_password_hash.get_secret_value().encode()
+    assert bcrypt.checkpw(b"a-long-password", stored)
+
+
+def test_hash_password_rejects_mismatch_and_short(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    answers = iter(["a-long-password", "different-password", "short"])
+    monkeypatch.setattr(cli.getpass, "getpass", lambda prompt="": next(answers))
+    assert cli.main(["hash-password"]) == 1
+    assert cli.main(["hash-password"]) == 1

@@ -83,3 +83,10 @@ def test_enum_stored_as_value_and_checked(session: Session) -> None:
 
     with pytest.raises(IntegrityError):
         session.execute(text("UPDATE message SET sender = 'her'"))
+
+
+def test_sql_errors_do_not_include_message_text(session: Session) -> None:
+    session.add(make_message(contact_id=999, text="very private words"))
+    with pytest.raises(IntegrityError) as excinfo:
+        session.commit()
+    assert "very private words" not in str(excinfo.value)

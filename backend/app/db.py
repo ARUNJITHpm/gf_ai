@@ -18,6 +18,8 @@ def create_db_engine(
     if url.get_backend_name() == "sqlite" and url.database not in (None, "", ":memory:"):
         Path(url.database).parent.mkdir(parents=True, exist_ok=True)
 
+    # hide_parameters: SQL errors would otherwise carry message text into logs/tracebacks.
+    engine_kwargs.setdefault("hide_parameters", True)
     engine = create_engine(url, **engine_kwargs)
     if url.get_backend_name() == "sqlite":
 

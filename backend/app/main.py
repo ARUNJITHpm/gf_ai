@@ -4,13 +4,16 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
+from sqlalchemy.exc import OperationalError
 
 from app import __version__
+from app.admin.setup import mount_admin
 from app.api import auth, health, importer, ingest
 from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
 from app.logging_utils import configure_logging, log_event
 from app.security import require_api_key
+from app.services.settings_store import seed_defaults
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -21,6 +24,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         log_event("app.start", version=__version__)
+        try:
+            with app.state.session_factory() as session:
+                seed_defaults(session)
+        except OperationalError:
+            log_event("app.db_not_migrated", hint="run: uv run alembic upgrade head")
         yield
         engine.dispose()
         log_event("app.stop")
@@ -39,4 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     protected.include_router(ingest.router)
     protected.include_router(importer.router)
     app.include_router(protected)
+
+    # /admin uses its own login (session cookie), not the API key.
+    mount_admin(app, settings)
     return app

@@ -15,8 +15,9 @@ A personal assistant that suggests WhatsApp replies in my voice. It reads the ch
 | P0 Setup + Android spike | ✅ done |
 | P1 Backend skeleton | ✅ done |
 | P2 Ingest + WhatsApp export import | ✅ done (real-data import is up to you, see below) |
-| P3 Admin (SQLAdmin) | next |
-| P4 Agent · P5 Memory jobs · P6 Android app | not started |
+| P3 Admin (SQLAdmin) | ✅ done (set your admin password, see below) |
+| P4 Agent + `/suggest` + CLI | next |
+| P5 Memory jobs · P6 Android app | not started |
 
 ## Backend
 
@@ -48,6 +49,25 @@ uv run uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 - API docs: http://127.0.0.1:8000/docs
 
 Always run with a **single worker** (the default). Background jobs, added in Phase 5, run inside the process.
+
+### Admin page
+
+One-time setup: choose a password and put its hash in `.env`.
+
+```bash
+uv run python -m app.cli hash-password     # asks twice, prints ADMIN_PASSWORD_HASH='...'
+```
+
+Paste that line (with the single quotes) into `backend/.env`. `SECRET_KEY` must be set too; it already is if `.env` was created by the setup. Restart the server and open http://127.0.0.1:8000/admin (user `admin` unless `ADMIN_USER` says otherwise).
+
+- **Memory notes** opens on the *pending* review queue. Tick notes and use **Actions → Approve / Reject**.
+- **Pinned facts**: hand-written facts the assistant always sees. Category `rule` facts are hard constraints.
+- **Settings**: `paused` (true stops all suggestions), `default_tone`, `recent_messages_n`, `notes_top_k`, `suggest_cache_seconds`. Values are JSON: `true`, `25`, `"warm"`.
+- **Style profiles**: select one → **Actions → Activate** (the previous active one is archived).
+- **Contacts** → open one → **Delete all data for contact**. You must type the name to confirm. The contact row stays.
+- Sessions last 12 hours; 5 login attempts per minute.
+
+If `ADMIN_PASSWORD_HASH` or `SECRET_KEY` is missing, `/admin` simply isn't mounted.
 
 ### Import your chat history
 
@@ -106,5 +126,12 @@ Choices made where the spec was open. See also `project.md` §15.
 - **Unknown contact on `/ingest`** → 404; contacts are never auto-created.
 - **`/ingest` limits:** at most 500 messages per call, 20,000 characters per message, 120 calls per minute.
 - **Imports**: up to 200 MB of chat text; inside a `.zip`, the file named "WhatsApp Chat…" is used (otherwise the largest `.txt`). 50,000 messages import in about 12 s, and a re-import takes about 5 s.
+- **Admin auth is separate from the API key.** `/admin` uses its own login and session cookie (HttpOnly, SameSite=Lax, 12 h; `ADMIN_HTTPS_ONLY=true` adds Secure). SQLAdmin actions are GET links. SameSite=Lax blocks cross-site *embedded* requests, and the admin is only reachable on localhost or the tailnet, so no extra CSRF tokens were added.
+- **Admin password** check always runs bcrypt, even for a wrong username, so timing doesn't reveal valid usernames.
+- **Models have a `contact` relationship** so admin forms show a contact dropdown. The schema is unchanged.
+- **SQL parameters are hidden** in SQLAlchemy errors (`hide_parameters=True`), so a failed insert can't put message text into a traceback or log.
+- **Timezone stays in `.env`**, not in the settings table (it's needed at import time and rarely changes). The table holds runtime switches only; known keys and types live in `app/services/settings_store.py` and are validated on save.
+- **"Delete all data for contact"** deletes messages, notes, facts, style profiles, suggestion logs and reminders, but keeps the contact so the phone can keep sending. To remove the contact too, delete it normally (the database cascades).
+- **`greenlet`** (via `sqlalchemy[asyncio]`) is installed because SQLAdmin imports SQLAlchemy's async module even when used with sync sessions.
 - **`tzdata`** added as a dependency: Windows has no system timezone database, and timezones are needed to convert export times.
 - **Starlette TestClient** warns that `httpx` should be replaced by `httpx2`. The warning is silenced in pytest config for now; revisit before it becomes an error.

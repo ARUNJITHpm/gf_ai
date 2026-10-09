@@ -4,9 +4,10 @@ from datetime import date
 from typing import Any
 
 from sqlalchemy import JSON, ForeignKey, LargeBinary, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, str_enum
+from app.models.contact import Contact
 from app.models.enums import FactCategory, NoteOrigin, NoteStatus, Recurrence, StyleStatus
 
 
@@ -16,6 +17,7 @@ class PinnedFact(TimestampMixin, Base):
     __tablename__ = "pinned_fact"
 
     contact_id: Mapped[int] = mapped_column(ForeignKey("contact.id", ondelete="CASCADE"))
+    contact: Mapped[Contact] = relationship()
     category: Mapped[FactCategory] = mapped_column(str_enum(FactCategory))
     content: Mapped[str] = mapped_column(Text)
     event_date: Mapped[date | None]
@@ -29,6 +31,7 @@ class MemoryNote(TimestampMixin, Base):
     __tablename__ = "memory_note"
 
     contact_id: Mapped[int] = mapped_column(ForeignKey("contact.id", ondelete="CASCADE"))
+    contact: Mapped[Contact] = relationship()
     content: Mapped[str] = mapped_column(Text)
     embedding: Mapped[bytes | None] = mapped_column(LargeBinary)  # float32 vector
     embedding_model: Mapped[str | None] = mapped_column(String(200))
@@ -45,6 +48,7 @@ class StyleProfile(TimestampMixin, Base):
     __tablename__ = "style_profile"
 
     contact_id: Mapped[int] = mapped_column(ForeignKey("contact.id", ondelete="CASCADE"))
+    contact: Mapped[Contact] = relationship()
     description: Mapped[str] = mapped_column(Text)
     tone_defaults: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     examples: Mapped[list[Any]] = mapped_column(JSON, default=list)

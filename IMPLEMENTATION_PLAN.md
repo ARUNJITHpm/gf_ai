@@ -148,20 +148,20 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 ## Phase 3 — Admin
 
-- [ ] **P3.1 Auth backend**
+- [x] **P3.1 Auth backend**
   - Files: `app/admin/setup.py`
   - Do: SQLAdmin `AuthenticationBackend`; bcrypt verify against `ADMIN_PASSWORD_HASH`; session signed with `SECRET_KEY`. CLI `hash-password`.
   - Done when: tests: correct login → 302 to admin; wrong password → stays on login; no session → redirect.
 
-- [ ] **P3.2 CRUD views** — Contact, PinnedFact, MemoryNote, StyleProfile, Reminder, Setting (with sensible list columns, search, filters).
-- [ ] **P3.3 Read-only views** — SuggestionLog, Message (delete allowed), JobState.
-- [ ] **P3.4 MemoryNote review queue** — pending first, status filter, bulk Approve/Reject actions. (Embedding-on-approve gets wired in P5.2; leave a hook.)
-- [ ] **P3.5 StyleProfile Activate action** — archives the previous active one.
-- [ ] **P3.6 Pause setting** — seeded `paused=false` row via migration or startup.
-- [ ] **P3.7 Delete-all-for-contact** — action with a confirm page requiring the contact name typed.
+- [x] **P3.2 CRUD views** — Contact, PinnedFact, MemoryNote, StyleProfile, Reminder, Setting (with sensible list columns, search, filters).
+- [x] **P3.3 Read-only views** — SuggestionLog, Message (delete allowed), JobState.
+- [x] **P3.4 MemoryNote review queue** — pending first, status filter, bulk Approve/Reject actions. (Embedding-on-approve gets wired in P5.2; leave a hook.)
+- [x] **P3.5 StyleProfile Activate action** — archives the previous active one.
+- [x] **P3.6 Pause setting** — seeded `paused=false` row via migration or startup.
+- [x] **P3.7 Delete-all-for-contact** — action with a confirm page requiring the contact name typed.
   - Done when: test deletes messages/notes/facts/logs/reminders for that contact only.
 
-**Gate P3:** log in, add a pinned fact, bulk-approve notes, wrong password rejected.
+**Gate P3: ✅ passed 2026-10-09** (124 tests; live smoke test of login and all 9 views). Log in, add a pinned fact, bulk-approve notes, wrong password rejected.
 
 ---
 

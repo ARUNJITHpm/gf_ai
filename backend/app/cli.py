@@ -3,13 +3,16 @@
 add-contact   --name NAME --title "Chat title" [--title ...]
 list-contacts
 import        --file chat.zip --contact NAME_OR_ID --me "My Name" --them "Her Name"
+hash-password (prompts; prints the ADMIN_PASSWORD_HASH line for .env)
 """
 
 import argparse
+import getpass
 import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import bcrypt
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -45,7 +48,12 @@ def main(argv: list[str] | None = None) -> int:
         "--date-order", choices=[o.value for o in DateOrder], default=DateOrder.AUTO.value
     )
 
+    commands.add_parser("hash-password", help="hash an admin password for .env")
+
     args = parser.parse_args(argv)
+    if args.command == "hash-password":
+        return _hash_password()  # needs no settings or database
+
     settings = get_settings()
     configure_logging("WARNING")
     engine = create_db_engine(settings.database_url)
@@ -58,6 +66,20 @@ def main(argv: list[str] | None = None) -> int:
             return _import(session, args, settings.tz)
     finally:
         engine.dispose()
+
+
+def _hash_password() -> int:
+    password = getpass.getpass("Admin password: ")
+    if len(password) < 10:
+        print("error: use at least 10 characters", file=sys.stderr)
+        return 1
+    if getpass.getpass("Repeat password: ") != password:
+        print("error: passwords don't match", file=sys.stderr)
+        return 1
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    print("Put this line in backend/.env:")
+    print(f"ADMIN_PASSWORD_HASH='{hashed}'")
+    return 0
 
 
 def _add_contact(session: Session, name: str, titles: list[str]) -> int:

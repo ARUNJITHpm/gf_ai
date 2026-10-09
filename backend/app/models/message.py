@@ -1,9 +1,10 @@
 from datetime import datetime
 
 from sqlalchemy import ForeignKey, Index, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, str_enum, utcnow
+from app.models.contact import Contact
 from app.models.enums import MessageKind, MessageSource, Sender
 
 
@@ -11,6 +12,7 @@ class Message(TimestampMixin, Base):
     __tablename__ = "message"
 
     contact_id: Mapped[int] = mapped_column(ForeignKey("contact.id", ondelete="CASCADE"))
+    contact: Mapped[Contact] = relationship()
     sender: Mapped[Sender] = mapped_column(str_enum(Sender))
     text: Mapped[str] = mapped_column(Text)  # normalized
     # When it was sent (UTC). Null for screen reads where the time wasn't visible.

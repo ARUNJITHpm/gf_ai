@@ -1,0 +1,29 @@
+{% extends "sqladmin/layout.html" %}
+{% block content %}
+<div class="col-12 col-md-8 col-lg-6">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Delete all data for {{ contact.name }}</h3>
+    </div>
+    <div class="card-body">
+      <p>This permanently deletes the following for this contact. The contact itself is kept, so new messages can still arrive.</p>
+      <table class="table table-sm">
+        <tbody>
+        {% for table, count in counts.items() %}
+          <tr><td>{{ table }}</td><td class="text-end">{{ count }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% if error %}
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endif %}
+      <form method="post">
+        <label class="form-label" for="confirm_name">Type <strong>{{ contact.name }}</strong> to confirm</label>
+        <input class="form-control mb-3" id="confirm_name" name="confirm_name" autocomplete="off" required>
+        <button type="submit" class="btn btn-danger">Delete everything</button>
+        <a class="btn btn-link" href="{{ url_for('admin:details', identity='contact', pk=contact.id) }}">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -144,7 +144,7 @@ All tables have `id` (int PK), `created_at`, `updated_at`. All datetimes are sto
 - **suggestion_log**: `contact_id`, `context_hash`, `request` (json, ids only), `suggestions` (json), `warnings` (json), `tone`, `chosen_index` (nullable), `final_text` (nullable), `prompt_version`, `model`, `input_tokens`, `output_tokens`, `latency_ms`
 - **reminder**: `contact_id`, `title`, `due_at` (UTC), `origin` (`promise` | `date` | `manual`), `origin_key` (unique, for idempotency), `done`, `notified_at`
 - **job_state**: `job_name` (unique), `last_message_id` (watermark), `last_run_at`, `last_status`
-- **setting**: `key` (unique), `value` (json). Keys: `paused` (bool), `default_tone`, `recent_messages_n` (25), `notes_top_k` (5), `timezone`, `suggest_cache_seconds` (60)
+- **setting**: `key` (unique), `value` (json). Keys: `paused` (bool), `default_tone`, `recent_messages_n` (25), `notes_top_k` (5), `suggest_cache_seconds` (60). (Timezone is `TIMEZONE` in `.env`.)
 
 ## 6. Ingest and dedupe rules
 
