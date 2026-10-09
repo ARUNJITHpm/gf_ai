@@ -5,9 +5,10 @@ Used by /ingest (notifications, screen reads), the WhatsApp export importer and 
 Dedupe in short:
 - The hash covers contact, sender and normalized text, never the time, because each
   source reports time differently (export: minute, notification: second, screen: often none).
-- Timestamped messages match an existing row with the same hash within ±2 minutes
-  (or a row without sent_at observed within ±10 minutes). Each stored row can match only
-  one incoming message, so two real "ok"s in the same minute stay two rows.
+- Timestamped messages match an existing row with the same hash within ±2 minutes, or
+  else a screen-read row (no sent_at) first seen up to 2 days after the send time. Each
+  stored row can match only one incoming message, so two real "ok"s in the same minute
+  stay two rows.
 - Messages without a timestamp (screen reads) are aligned as a sequence against the tail of
   the stored conversation, and only the part that isn't already stored is inserted.
 """
@@ -31,6 +32,9 @@ from app.models.enums import MessageKind, MessageSource, Sender
 
 TIMESTAMP_WINDOW = timedelta(minutes=2)
 OBSERVED_WINDOW = timedelta(minutes=10)
+# How long after sending a message may still first appear via a (timeless) screen read.
+SCREEN_LATE_WINDOW = timedelta(days=2)
+_NEW_ROW = 2**62  # sort key for rows added in this call (no id yet): newest of all
 ALIGN_TAIL = 100
 _HASH_CHUNK = 500
 
@@ -264,15 +268,19 @@ class _Bucket:
             gap = abs(self.times[index] - sent_at)
             if id(row) not in claimed and (best is None or gap < best[0]):
                 best = (gap, row)
-        for row in self.untimed:
-            gap = abs(row.observed_at - sent_at)
-            if (
-                id(row) not in claimed
-                and gap <= OBSERVED_WINDOW
-                and (best is None or gap < best[0])
-            ):
-                best = (gap, row)
-        return None if best is None else best[1]
+        if best is not None:
+            return best[1]
+        # A screen read has no time; it was stamped when the phone saw it, which can be long
+        # after the message was sent (e.g. opening the chat the next morning). It can be the
+        # same message if seen from shortly before up to SCREEN_LATE_WINDOW after sending.
+        # Among identical texts, the newest copy (highest id) is the likeliest match.
+        candidates = [
+            (row.id if row.id is not None else _NEW_ROW, position, row)
+            for position, row in enumerate(self.untimed)
+            if id(row) not in claimed
+            and -OBSERVED_WINDOW <= row.observed_at - sent_at <= SCREEN_LATE_WINDOW
+        ]
+        return max(candidates, key=lambda c: (c[0], c[1]))[2] if candidates else None
 
 
 def _existing_by_hash(

@@ -152,7 +152,7 @@ The same message can arrive from up to three sources (export, notification, scre
 
 1. **Normalize text**: Unicode NFC, strip LRM/RLM/zero-width chars and U+202F, collapse whitespace, strip trailing `<This message was edited>`.
 2. **Hash** = sha256 of `contact_id | sender | normalized_text`. The timestamp is NOT in the hash.
-3. **With `sent_at`**: it is a duplicate if a message with the same hash exists with `sent_at` within ±2 minutes (or with null `sent_at` and `observed_at` within ±10 minutes). If the existing row has null `sent_at`, fill it in.
+3. **With `sent_at`**: it is a duplicate if a message with the same hash exists with `sent_at` within ±2 minutes; otherwise, if a row with null `sent_at` (a screen read) was first seen between 10 minutes before and 2 days after the send time, it is the same message (newest such row wins) and its `sent_at` is filled in. (Found in the Phase 6 device test: a chat opened 38 minutes after a message arrived stored it twice.)
 4. **Without `sent_at`** (screen reads): treat the visible list as a sequence and align it against the tail of the stored conversation (last ~100 messages). Insert only the suffix that does not overlap. Never insert a screen message that matches the last stored message for that sender exactly unless the alignment proves it is new.
 5. **Notifications**: WhatsApp posts `MessagingStyle` notifications that contain several messages and are re-posted on every new message. Send all messages in the notification with their own timestamps; dedupe handles the repeats. Ignore summary notifications ("N new messages") and group chats.
 6. `/ingest` and the importer return `{inserted, skipped, updated}`.

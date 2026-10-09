@@ -222,31 +222,31 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 Split into four shippable sub-phases. Reuse the P0 spike learnings; start a clean project.
 
 ### 6a — App shell + networking
-- [ ] **P6.1** New project `com.example.replyassistant`, minSdk 29. Compose settings screen (§11), EncryptedSharedPreferences.
-- [ ] **P6.2** Retrofit/OkHttp client with `X-API-Key` interceptor; "Test connection" button.
-- [ ] **P6.3** Backend over Tailscale HTTPS (`tailscale serve`); document setup in README.
+- [x] **P6.1** New project `com.example.replyassistant`, minSdk 29. Compose settings screen (§11), EncryptedSharedPreferences.
+- [x] **P6.2** Retrofit/OkHttp client with `X-API-Key` interceptor; "Test connection" button.
+- [ ] **P6.3** Backend over Tailscale HTTPS (`tailscale serve`); document setup in README. (Documented; not done yet: developed over USB with `adb reverse`.)
 - Done when: Test connection succeeds from the phone over mobile data.
 
 ### 6b — Notification ingest + outbox
-- [ ] **P6.4** `NotificationListenerService`: parse `MessagingStyle`, filter per §11, map senders. Filter groups with `EXTRA_IS_GROUP_CONVERSATION` first (group titles carry a changing "(N messages)" suffix, see `spikes/notes.md`).
-- [ ] **P6.5** Room outbox + WorkManager retry with backoff.
-- [ ] **P6.6** Unit tests for notification parsing using P0.5 samples.
+- [x] **P6.4** `NotificationListenerService`: parse `MessagingStyle`, filter per §11, map senders. Filter groups with `EXTRA_IS_GROUP_CONVERSATION` first (group titles carry a changing "(N messages)" suffix, see `spikes/notes.md`).
+- [x] **P6.5** Room outbox + WorkManager retry with backoff.
+- [x] **P6.6** Unit tests for notification parsing using P0.5 samples.
 - Done when: a message from her shows up in the admin Message view; with backend stopped, it arrives after restart.
 
 ### 6c — Screen parsing
-- [ ] **P6.7** `WhatsAppScreenParser`: input = node tree snapshot (plain data class, so it's unit-testable without a device); output = chat title + ordered `(sender, text, time?)` list.
-- [ ] **P6.8** Fixture-based unit tests from redacted tree dumps; debug-only "Dump tree" action.
-- [ ] **P6.9** AccessibilityService wiring: debounce content-changed events, only for the configured chat, send to `/ingest` (source `screen`).
+- [x] **P6.7** `WhatsAppScreenParser`: input = node tree snapshot (plain data class, so it's unit-testable without a device); output = chat title + ordered `(sender, text, time?)` list.
+- [x] **P6.8** Fixture-based unit tests from redacted tree dumps; debug-only "Dump tree" action.
+- [x] **P6.9** AccessibilityService wiring: debounce content-changed events, only for the configured chat, send to `/ingest` (source `screen`).
 - Done when: scrolling the chat produces no duplicate rows in the backend.
 
 ### 6d — Bubble + insert
-- [ ] **P6.10** Overlay bubble (`TYPE_ACCESSIBILITY_OVERLAY`) shown only in the matching chat; draggable.
-- [ ] **P6.11** Panel: loading state, 3 suggestions with reason on long-press, tone selector, refresh, error state.
-- [ ] **P6.12** Tap → `ACTION_SET_TEXT` + feedback call. Add a code-level assertion/test that no send-button action exists anywhere.
-- [ ] **P6.13** Reminder polling via WorkManager → local notification.
-- [ ] **P6.14** README: sideloading, restricted settings (Android 13+), battery optimization, Tailscale.
+- [x] **P6.10** Overlay bubble (`TYPE_ACCESSIBILITY_OVERLAY`) shown only in the matching chat; draggable.
+- [x] **P6.11** Panel: loading state, 3 suggestions with reason on long-press, tone selector, refresh, error state.
+- [x] **P6.12** Tap → `ACTION_SET_TEXT` + feedback call. Add a code-level assertion/test that no send-button action exists anywhere.
+- [x] **P6.13** Reminder polling via WorkManager → local notification. (Built; not yet seen firing on the device.)
+- [x] **P6.14** README: sideloading, restricted settings (Android 13+), battery optimization, Tailscale.
 
-**Gate P6:** §13 Phase 6 acceptance on a fresh install.
+**Gate P6: ✅ mostly passed 2026-10-10** on the Redmi 9 over USB: configured from a fresh install, notification ingested, bubble shown in the chat, suggestions fetched (3.4–5.5 s), chosen text inserted without sending, feedback recorded, sent message linked. Still open: the offline-queue check (backend stopped, then restarted) and Tailscale. §13 Phase 6 acceptance on a fresh install.
 
 ---
 

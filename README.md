@@ -18,7 +18,7 @@ A personal assistant that suggests WhatsApp replies in my voice. It reads the ch
 | P3 Admin (SQLAdmin) | ✅ done (set your admin password, see below) |
 | P4 Agent + `/suggest` + CLI | ✅ done; running on OpenAI `gpt-4o-mini`, evals 10/10 |
 | P5 Memory jobs | ✅ done |
-| P6 Android app | next |
+| P6 Android app | ✅ done on a Redmi 9 over USB; Tailscale and offline-queue check still open |
 
 ## Backend
 
@@ -155,6 +155,46 @@ uv run alembic upgrade head
 
 `tests/test_migrations.py` fails if models and migrations drift apart.
 
+## Android app
+
+Thin client in `android/`. It reads the configured WhatsApp chat (notifications + the open screen), shows a 💬 bubble with suggestions, and types the chosen one into the message box. **It never presses Send.** A unit test fails the build if any click/gesture action appears in the code.
+
+### Build
+
+Requires JDK 17 and the Android SDK (`ANDROID_HOME`). From `android/`:
+
+```bash
+./gradlew testDebugUnitTest assembleDebug     # APK: app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Install (sideload)
+
+- Phone: enable USB debugging (Developer options).
+- `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+  - **Xiaomi/MIUI** blocks this (`INSTALL_FAILED_USER_RESTRICTED`) unless "Install via USB" is on (needs a Mi account). Workaround: `adb push app-debug.apk /sdcard/Download/` (Git Bash: prefix with `MSYS_NO_PATHCONV=1`) and install it from File Manager.
+- **Android 13+:** if the accessibility switch is greyed out ("Restricted setting"), go to Settings → Apps → Reply Assistant → ⋮ → **Allow restricted settings**.
+- **Battery:** set the app to **No restrictions** / disable battery optimization, and on MIUI turn **Autostart** on, or the system kills the services.
+
+### Set up
+
+1. Settings → Accessibility → Downloaded apps → **Reply Assistant (WhatsApp)** → ON.
+2. Notification access → **Reply Assistant** → Allow. (`adb shell cmd notification allow_listener com.example.replyassistant/com.example.replyassistant.notify.WaNotificationListener` also works.)
+3. Backend: `uv run python -m app.cli add-contact --name "<name>" --title "<chat title as WhatsApp shows it>"`.
+4. Open the app: backend URL, API key, chat title → **Save** → **Test connection**.
+   - Debug builds can be prefilled from the PC so the long key needn't be typed (you still tap Save):
+     `adb shell am start -n com.example.replyassistant/.ui.SettingsActivity --es backend_url http://127.0.0.1:8000 --es api_key <API_KEY> --es chat_title "'<title>'"`
+
+### Connecting the phone to the backend
+
+- **USB (development):** run the backend on the PC, then `adb reverse tcp:8000 tcp:8000`; the app uses `http://127.0.0.1:8000`. The tunnel disappears whenever USB reconnects. Re-run it, or keep a loop going:
+  `while true; do adb wait-for-device; adb reverse --list | grep -q tcp:8000 || adb reverse tcp:8000 tcp:8000; sleep 3; done`
+- **Anywhere (Tailscale):** install Tailscale on PC and phone and sign in to the same tailnet. On the PC: `tailscale serve --bg 8000`, which gives `https://<pc-name>.<tailnet>.ts.net`. Put that URL in the app. Plain HTTP is only allowed to `127.0.0.1`/`localhost` (`res/xml/network_security_config.xml`), so use the HTTPS URL.
+- If the backend is unreachable, messages wait in the phone's outbox (Room) and are delivered later. Settings shows how many are waiting.
+
+### When WhatsApp updates and the bubble stops working
+
+All WhatsApp-specific view ids live in `WhatsAppScreenParser.kt`. In the app tap **Debug: dump next chat screen**, then open the chat. A redacted tree (text replaced by lengths) is saved under the app's files (`adb shell run-as com.example.replyassistant ls files/dumps`). Turn it into a test fixture like `src/test/resources/screen_wa_2_26_39.json` (with made-up text) and fix the ids.
+
 ## Decisions
 
 Choices made where the spec was open. See also `project.md` §15.
@@ -195,6 +235,13 @@ Choices made where the spec was open. See also `project.md` §15.
 - **Promises** only come from your messages of the last 3 days, so an imported history doesn't create hundreds of overdue reminders. A promise with no time, or a time before the message, is due 3 hours after it.
 - **The summarizer** tracks both a time cursor and a message-id cursor (`job_state.cursor_at`, migration 0002), so old messages imported later still get summarized.
 - **The style refresh** uses `LLM_MODEL` (quality) and the other jobs use `LLM_FAST_MODEL`. Examples in a style profile are picked by index from your real messages, so they're always verbatim.
+- **Android Kotlin version:** AGP 9.3.3 compiles Kotlin itself (bundled 2.2.10). Kotlin 2.4.21 is pinned through the Compose and serialization plugins, because the Compose compiler must equal the Kotlin compiler; KSP 2.3.12 for Room.
+- **API key on the phone:** encrypted with an AES-GCM key in the Android Keystore. `EncryptedSharedPreferences` is deprecated, so this is done directly. Same protection.
+- **Bubble and panel are plain Views** on a `TYPE_ACCESSIBILITY_OVERLAY` window. Compose inside an accessibility service overlay needs lifecycle workarounds, so Compose is used for the settings screen only.
+- **Every ingest goes through the Room outbox** (not only when offline), so there is one code path; WorkManager delivers within seconds. 400-level answers other than 401/429 (unknown contact, bad payload) drop the item instead of retrying forever.
+- **Screen reads send no timestamps**; the backend aligns them with the stored chat. The parser does read the bubble time (`9:41 pm`), but combining it with date dividers reliably is left for later.
+- **Dedupe fix from the device test:** a chat opened 38 minutes after a message arrived (screen copy stamped "now"), followed by the notification with the real time, stored the message twice. A timeless screen row now matches a timed copy if first seen up to 2 days after sending (newest identical copy wins). Regression tests in `tests/test_ingest_dedupe.py`.
+- **Debug-only settings prefill** via `adb shell am start ... --es api_key ...`. Ignored in release builds, because any app could start the activity and point it at another server.
 - **`greenlet`** (via `sqlalchemy[asyncio]`) is installed because SQLAdmin imports SQLAlchemy's async module even when used with sync sessions.
 - **`tzdata`** added as a dependency: Windows has no system timezone database, and timezones are needed to convert export times.
 - **`httpx2`** arrives with the Anthropic SDK 1.x, and Starlette's TestClient uses it, so the old `httpx` deprecation warning is gone (no filter needed).

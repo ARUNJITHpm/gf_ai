@@ -157,3 +157,50 @@ def test_kinds_and_empty_text(session: Session, contact: Contact) -> None:
     assert (result.inserted, result.skipped) == (2, 1)
     kinds = session.scalars(select(Message.kind).order_by(Message.id)).all()
     assert kinds == [MessageKind.MEDIA, MessageKind.DELETED]
+
+
+def test_screen_read_long_after_sending_then_notification(
+    session: Session, contact: Contact
+) -> None:
+    """Device test, Phase 6: the chat was opened 38 min after a message arrived (screen copy
+    stamped 'now'), then the notification brought the real time. Must stay one message."""
+    sent = T0
+    ingest_messages(
+        session,
+        contact,
+        [msg(THEM, "a longer message from last night", SCREEN)],
+        now=sent + timedelta(minutes=38),
+    )
+    result = ingest_messages(
+        session,
+        contact,
+        [msg(THEM, "a longer message from last night", NOTIF, sent)],
+        now=sent + timedelta(minutes=40),
+    )
+    assert (result.inserted, result.updated) == (0, 1)
+    assert stored(session) == [("contact", "a longer message from last night", sent)]
+
+
+def test_repeated_text_notification_updates_newest_screen_copy(
+    session: Session, contact: Contact
+) -> None:
+    """Device test, Phase 6: 'Hi' twice on screen; the notification is for the newest one."""
+    ingest_messages(
+        session,
+        contact,
+        [msg(THEM, "Hi", SCREEN), msg(ME, "hello", SCREEN), msg(THEM, "Hi", SCREEN)],
+        now=T0 + timedelta(minutes=1),
+    )
+    ingest_messages(session, contact, [msg(THEM, "Hi", NOTIF, T0)], now=T0 + timedelta(minutes=2))
+    rows = session.scalars(select(Message).where(Message.text == "Hi").order_by(Message.id)).all()
+    assert [r.sent_at for r in rows] == [None, T0]
+
+
+def test_old_export_does_not_absorb_recent_screen_copy(session: Session, contact: Contact) -> None:
+    ingest_messages(session, contact, [msg(ME, "ok", SCREEN)], now=T0)
+    result = ingest_messages(session, contact, [msg(ME, "ok", EXPORT, T0 - timedelta(days=60))])
+    assert result.inserted == 1  # a 2-month-old "ok" is a different message
+    assert [r.sent_at for r in session.scalars(select(Message).order_by(Message.id))] == [
+        None,
+        T0 - timedelta(days=60),
+    ]
