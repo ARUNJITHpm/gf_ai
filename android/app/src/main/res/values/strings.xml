@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Reply Assistant</string>
+    <string name="a11y_label">Reply Assistant (WhatsApp)</string>
+    <string name="notif_label">Reply Assistant notifications</string>
+    <string name="a11y_description">Reads the open WhatsApp chat you configured, shows a suggestion bubble, and can type a chosen suggestion into the message box. It never presses Send.</string>
+</resources>

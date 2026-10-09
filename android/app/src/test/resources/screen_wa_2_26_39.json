@@ -1,0 +1,63 @@
+{
+  "comment": "Structure of a real WhatsApp 2.26.39 chat screen (Redmi 9, 720 px wide, Phase 0 spike). Texts are synthetic.",
+  "screenWidth": 720,
+  "root": {"viewId": "android:id/content", "bounds": [0,55,720,1006], "children": [
+    {"viewId": "com.whatsapp:id/toolbar", "bounds": [0,55,720,167], "children": [
+      {"viewId": "com.whatsapp:id/whatsapp_toolbar_home", "className": "android.widget.Button", "bounds": [0,63,96,159]},
+      {"viewId": "com.whatsapp:id/conversation_contact_name", "className": "android.widget.TextView", "text": "Asha 🌸", "bounds": [200,82,418,136]}
+    ]},
+    {"viewId": "com.whatsapp:id/list", "className": "android.widget.ListView", "bounds": [0,167,720,894], "children": [
+      {"viewId": "com.whatsapp:id/conversation_row_date_divider", "text": "TODAY", "bounds": [298,181,422,249]},
+      {"viewId": "com.whatsapp:id/info", "className": "android.widget.Button", "text": "Messages and calls are end-to-end encrypted.", "bounds": [74,258,646,435]},
+      {"viewId": "com.whatsapp:id/conversation_row_text", "bounds": [0,438,720,531], "children": [
+        {"viewId": "com.whatsapp:id/main_layout", "bounds": [454,448,686,521], "children": [
+          {"viewId": "com.whatsapp:id/conversation_text_row", "bounds": [454,448,686,521], "children": [
+            {"viewId": "com.whatsapp:id/message_text", "text": "hi", "bounds": [458,452,525,517]},
+            {"viewId": "com.whatsapp:id/date_wrapper", "bounds": [525,477,678,517], "children": [
+              {"viewId": "com.whatsapp:id/date", "text": "9:40 pm", "bounds": [525,477,628,515]},
+              {"viewId": "com.whatsapp:id/status", "className": "android.widget.ImageView", "bounds": [628,484,668,508]}
+            ]}
+          ]}
+        ]}
+      ]},
+      {"viewId": "com.whatsapp:id/conversation_row_text", "bounds": [0,531,720,624], "children": [
+        {"viewId": "com.whatsapp:id/main_layout", "bounds": [34,541,236,614], "children": [
+          {"viewId": "com.whatsapp:id/conversation_text_row", "bounds": [34,541,236,614], "children": [
+            {"viewId": "com.whatsapp:id/message_text", "text": "hey!", "bounds": [38,545,105,610]},
+            {"viewId": "com.whatsapp:id/date_wrapper", "bounds": [105,572,232,610], "children": [
+              {"viewId": "com.whatsapp:id/date", "text": "9:41 pm", "bounds": [117,572,220,610]}
+            ]}
+          ]}
+        ]}
+      ]},
+      {"viewId": "com.whatsapp:id/conversation_row_text", "bounds": [0,624,720,717], "children": [
+        {"viewId": "com.whatsapp:id/main_layout", "bounds": [435,634,686,707], "children": [
+          {"viewId": "com.whatsapp:id/conversation_text_row", "bounds": [435,634,686,707], "children": [
+            {"viewId": "com.whatsapp:id/message_text", "text": "how was it", "bounds": [439,638,525,703]},
+            {"viewId": "com.whatsapp:id/date_wrapper", "bounds": [525,663,678,703], "children": [
+              {"viewId": "com.whatsapp:id/date", "text": "9:41 pm", "bounds": [525,663,628,701]},
+              {"viewId": "com.whatsapp:id/status", "className": "android.widget.ImageView", "bounds": [628,670,668,694]}
+            ]}
+          ]}
+        ]}
+      ]},
+      {"viewId": "com.whatsapp:id/conversation_row_text", "bounds": [0,717,720,810], "children": [
+        {"viewId": "com.whatsapp:id/main_layout", "bounds": [34,727,535,800], "children": [
+          {"viewId": "com.whatsapp:id/conversation_text_row", "bounds": [34,727,535,800], "children": [
+            {"viewId": "com.whatsapp:id/message_text", "text": "long day, tell u later", "bounds": [38,731,315,796]},
+            {"viewId": "com.whatsapp:id/date_wrapper", "bounds": [315,758,531,796], "children": [
+              {"viewId": "com.whatsapp:id/edit_label", "text": "Edited", "bounds": [327,758,416,796]},
+              {"viewId": "com.whatsapp:id/date", "text": "9:43 pm", "bounds": [416,758,519,796]}
+            ]}
+          ]}
+        ]}
+      ]}
+    ]},
+    {"viewId": "com.whatsapp:id/footer", "bounds": [0,894,720,1006], "children": [
+      {"viewId": "com.whatsapp:id/entry", "className": "android.widget.EditText", "text": "Message", "editable": true, "bounds": [112,912,301,985]},
+      {"viewId": "com.whatsapp:id/send_container", "bounds": [605,899,701,995], "children": [
+        {"viewId": "com.whatsapp:id/voice_note_btn", "className": "android.widget.ImageButton", "bounds": [605,899,701,995]}
+      ]}
+    ]}
+  ]}
+}
