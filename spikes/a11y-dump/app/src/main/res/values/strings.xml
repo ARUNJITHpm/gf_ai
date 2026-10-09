@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A11y Spike</string>
+    <string name="a11y_label">A11y Spike (WhatsApp dump)</string>
+    <string name="notif_label">A11y Spike notifications</string>
+    <string name="a11y_description">Phase 0 spike. Logs the WhatsApp chat screen structure to logcat and can insert test text into the message box. Never sends messages.</string>
+</resources>

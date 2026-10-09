@@ -1,0 +1,34 @@
+# Secrets and private data — never commit
+.env
+*.db
+*.db-*
+*.sqlite
+exports/
+*.txt.zip
+backend/evals/data/
+spikes/**/dumps/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+captures/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db
