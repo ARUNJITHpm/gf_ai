@@ -54,47 +54,47 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 ## Phase 1 — Backend skeleton
 
-- [ ] **P1.1 Project init**
+- [x] **P1.1 Project init**
   - Files: `backend/pyproject.toml`, `backend/.python-version`
   - Do: `uv init`, add deps from §2 (fastapi, uvicorn, pydantic-settings, sqlalchemy, alembic, httpx, pytest, ruff, mypy). Configure ruff (line length, isort) and mypy (strict on `app/`).
   - Done when: `uv run pytest` (0 tests) and `uv run ruff check .` run.
 
-- [ ] **P1.2 Config**
+- [x] **P1.2 Config**
   - Files: `app/config.py`, `.env.example`
   - Do: `Settings` with every variable in §12, sensible defaults, `DATABASE_URL` default per §12. `get_settings()` cached.
   - Done when: test loads settings from a temp `.env`; missing `API_KEY` raises a clear error.
 
-- [ ] **P1.3 DB engine + session**
+- [x] **P1.3 DB engine + session**
   - Files: `app/db.py`
   - Do: sync engine; on connect set `PRAGMA journal_mode=WAL`, `PRAGMA foreign_keys=ON`. `get_session()` dependency. Test fixture that creates a temp DB per test.
   - Done when: test confirms foreign keys are enforced.
 
-- [ ] **P1.4 Models**
+- [x] **P1.4 Models**
   - Files: `app/models/*.py` (base with id/created_at/updated_at, + every table in §5)
   - Done when: `Base.metadata.create_all` works in a test; enums are string enums.
 
-- [ ] **P1.5 Alembic**
+- [x] **P1.5 Alembic**
   - Files: `alembic.ini`, `alembic/env.py`, first revision
   - Do: `render_as_batch=True`; URL from settings; autogenerate initial migration and review it.
   - Done when: `alembic upgrade head` on an empty file creates all tables; `alembic downgrade base` drops them.
 
-- [ ] **P1.6 Security**
+- [x] **P1.6 Security**
   - Files: `app/security.py`
   - Do: `require_api_key` dependency with `hmac.compare_digest`; simple in-memory token-bucket `RateLimiter(rate, per)` dependency factory.
   - Done when: unit tests for correct/incorrect/missing key, and limiter allowing N then 429.
 
-- [ ] **P1.7 App + health**
+- [x] **P1.7 App + health**
   - Files: `app/main.py`, `app/api/health.py`
   - Do: app factory with lifespan; `/health` returns `{status, db, version}` (db = `SELECT 1`). A placeholder authed router to prove 401s.
   - Done when: `uv run uvicorn app.main:app --host 127.0.0.1` starts; tests: `/health` 200 without key, other route 401 without key.
 
-- [ ] **P1.8 Logging**
+- [x] **P1.8 Logging**
   - Do: stdlib logging config, JSON or plain, `LOG_LEVEL` from settings. Helper `log_event(name, **ids_and_counts)`.
   - Done when: a test asserts the helper refuses/strips a `text=` kwarg.
 
-- [ ] **P1.9 README v1** — setup, run, test commands; "Decisions" section.
+- [x] **P1.9 README v1** — setup, run, test commands; "Decisions" section.
 
-**Gate P1:** §13 Phase 1 checks pass; ruff + mypy clean.
+**Gate P1: ✅ passed 2026-10-09** (32 tests; ruff + mypy strict clean; server smoke-tested). §13 Phase 1 checks pass; ruff + mypy clean.
 
 ---
 

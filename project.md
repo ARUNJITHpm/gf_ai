@@ -28,7 +28,7 @@ So: all logic lives in the Python backend, the admin UI is auto-generated (SQLAd
 ## 2. Tech stack (fixed)
 
 Backend
-- Python 3.12, FastAPI, Pydantic v2, pydantic-settings, Uvicorn (**single worker**, see section 8)
+- Python 3.12, FastAPI, Pydantic v2, pydantic-settings, Uvicorn (**single worker**, see section 9), `tzdata` (timezone data on Windows)
 - SQLAlchemy 2.x (**sync** sessions — simpler, single user) + Alembic (`render_as_batch=True`, required for SQLite ALTERs), SQLite file DB
 - Embeddings: `fastembed` (local) with a **multilingual** model, default `intfloat/multilingual-e5-small` (configurable via `EMBEDDING_MODEL`). Chats are often mixed-language; the English-only default model would retrieve poorly.
 - Vector search: embeddings stored as `float32` BLOBs, brute-force cosine similarity with numpy (a few thousand notes at most — this is fast enough). `sqlite-vec` is an optional later upgrade behind the same `retrieval.py` interface.
