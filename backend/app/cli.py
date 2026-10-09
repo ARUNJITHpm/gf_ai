@@ -5,6 +5,8 @@ list-contacts
 import        --file chat.zip --contact NAME_OR_ID --me "My Name" --them "Her Name"
 hash-password (prompts; prints the ADMIN_PASSWORD_HASH line for .env)
 suggest       --contact NAME_OR_ID [--tone warm] [--draft "my draft"]   (calls the real model)
+run-job       NAME | --all   (extractor, promises, summarizer, date_reminders, linker, style)
+reembed       recompute every note embedding (after changing EMBEDDING_MODEL)
 """
 
 import argparse
@@ -15,7 +17,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import bcrypt
-from sqlalchemy import func, select
+from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import Session
 
 from app.agent.llm import LLMClient, LLMError, make_llm
@@ -23,7 +25,10 @@ from app.agent.nodes import DraftFailed
 from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
 from app.logging_utils import configure_logging
-from app.models import Contact, Message, SuggestionLog
+from app.memory.embeddings import FastEmbedEmbedder
+from app.memory.retrieval import ensure_embeddings
+from app.models import Contact, MemoryNote, Message, SuggestionLog
+from app.models.base import utcnow
 from app.services.export_parser import DateOrder, ExportParseError
 from app.services.importer import import_export, read_export_text
 from app.services.suggest import suggest_replies
@@ -68,6 +73,12 @@ def main(argv: list[str] | None = None) -> int:
     sug.add_argument("--tone", help="e.g. warm, playful, apologetic (default: setting)")
     sug.add_argument("--draft", help="improve this draft instead of writing fresh replies")
 
+    job = commands.add_parser("run-job", help="run a background job now")
+    job.add_argument("name", nargs="?", help="job name; omit with --all")
+    job.add_argument("--all", action="store_true", help="run every job once")
+
+    commands.add_parser("reembed", help="recompute all note embeddings")
+
     args = parser.parse_args(argv)
     if args.command == "hash-password":
         return _hash_password()  # needs no settings or database
@@ -83,6 +94,10 @@ def main(argv: list[str] | None = None) -> int:
                 return _list_contacts(session)
             if args.command == "suggest":
                 return _suggest(session, args, settings)
+            if args.command == "reembed":
+                return _reembed(session, settings)
+            if args.command == "run-job":
+                return _run_jobs(engine, args, settings)
             return _import(session, args, settings.tz)
     finally:
         engine.dispose()
@@ -159,10 +174,6 @@ def _import(session: Session, args: argparse.Namespace, tz: ZoneInfo) -> int:
     return 0
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
-
 def _suggest(
     session: Session, args: argparse.Namespace, settings: Settings, llm: LLMClient | None = None
 ) -> int:
@@ -174,7 +185,13 @@ def _suggest(
         llm = make_llm(settings)
     try:
         result = suggest_replies(
-            session, contact, llm=llm, settings=settings, tone=args.tone, draft_text=args.draft
+            session,
+            contact,
+            llm=llm,
+            settings=settings,
+            tone=args.tone,
+            draft_text=args.draft,
+            embedder=FastEmbedEmbedder(settings.embedding_model, settings.model_cache_dir),
         )
     except (DraftFailed, LLMError) as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -195,3 +212,44 @@ def _suggest(
             f"{log.input_tokens} in / {log.output_tokens} out tokens, model {log.model}"
         )
     return 0
+
+
+def _run_jobs(
+    engine: Engine, args: argparse.Namespace, settings: Settings, llm: LLMClient | None = None
+) -> int:
+    from app.jobs.base import JobContext, run_job
+    from app.jobs.scheduler import JOBS
+
+    names = list(JOBS) if args.all else [args.name]
+    unknown = [n for n in names if n not in JOBS]
+    if not names or names == [None] or unknown:
+        print(f"error: choose one of {', '.join(JOBS)} or --all", file=sys.stderr)
+        return 1
+    ctx = JobContext(
+        session_factory=create_session_factory(engine),
+        llm=llm or make_llm(settings),
+        embedder=FastEmbedEmbedder(settings.embedding_model, settings.model_cache_dir),
+        settings=settings,
+        now=utcnow(),
+    )
+    failed = False
+    for name in names:
+        status = run_job(name, JOBS[name].fn, ctx)
+        failed = failed or status.startswith("error")
+        print(f"{name}: {status}")
+    return 1 if failed else 0
+
+
+def _reembed(session: Session, settings: Settings) -> int:
+    embedder = FastEmbedEmbedder(settings.embedding_model, settings.model_cache_dir)
+    notes = session.scalars(select(MemoryNote)).all()
+    for note in notes:
+        note.embedding = None
+    count = ensure_embeddings(notes, embedder)
+    session.commit()
+    print(f"re-embedded {count} notes with {embedder.model_name}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

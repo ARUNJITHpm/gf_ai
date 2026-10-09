@@ -28,3 +28,38 @@ class RiskVerdict(BaseModel):
 
 class RiskReport(BaseModel):
     verdicts: list[RiskVerdict]
+
+
+# --- background jobs --------------------------------------------------------------------
+
+
+class ExtractedNote(BaseModel):
+    content: str = Field(description="One durable fact, as a short third-person sentence.")
+    source_message_ids: list[int] = Field(description="Ids of the messages it comes from.")
+
+
+class ExtractedNotes(BaseModel):
+    notes: list[ExtractedNote]
+
+
+class PromiseItem(BaseModel):
+    message_id: int = Field(description="Id of my message containing the commitment.")
+    title: str = Field(description="Short reminder text, e.g. 'Call her tonight'.")
+    due_local: str = Field(
+        description="When it's due, local time 'YYYY-MM-DD HH:MM'; empty if no time is implied."
+    )
+
+
+class Promises(BaseModel):
+    items: list[PromiseItem]
+
+
+class ChatSummary(BaseModel):
+    worth_keeping: bool = Field(description="False if nothing here matters later.")
+    summary: str = Field(description="2-4 sentences of what's worth remembering; may be empty.")
+
+
+class StyleDraft(BaseModel):
+    description: str = Field(description="How I write to this person, in 3-6 sentences.")
+    default_tone: str = Field(description="My usual tone, one or two words.")
+    example_indexes: list[int] = Field(description="Indexes of 3-6 typical messages of mine.")

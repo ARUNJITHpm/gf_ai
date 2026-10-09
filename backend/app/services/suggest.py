@@ -16,6 +16,7 @@ from app.agent.prompts import PROMPT_VERSION
 from app.agent.state import AgentDeps
 from app.config import Settings
 from app.logging_utils import log_event
+from app.memory.embeddings import Embedder
 from app.models import Contact, MemoryNote, Message, PinnedFact, StyleProfile, SuggestionLog
 from app.models.base import utcnow
 from app.models.enums import NoteStatus, StyleStatus
@@ -41,6 +42,7 @@ def suggest_replies(
     tone: str | None = None,
     draft_text: str | None = None,
     now: datetime | None = None,
+    embedder: Embedder | None = None,
 ) -> SuggestResult:
     """Raises `DraftFailed` or `LLMError` when no suggestions could be produced."""
     now = now or utcnow()
@@ -72,6 +74,8 @@ def suggest_replies(
         now=now,
         recent_messages_n=get_setting(session, "recent_messages_n"),
         notes_top_k=get_setting(session, "notes_top_k"),
+        notes_min_score=get_setting(session, "notes_min_score"),
+        embedder=embedder,
     )
     started = time.perf_counter()
     state = run_agent(deps, {"contact": contact, "tone": tone, "draft_text": draft_text})

@@ -50,7 +50,12 @@ def load_context(state: AgentState, deps: AgentDeps) -> dict[str, Any]:
 
 def retrieve(state: AgentState, deps: AgentDeps) -> dict[str, Any]:
     notes = retrieve_notes(
-        deps.session, state["contact"].id, state["messages"], top_k=deps.notes_top_k
+        deps.session,
+        state["contact"].id,
+        state["messages"],
+        top_k=deps.notes_top_k,
+        embedder=deps.embedder,
+        min_score=deps.notes_min_score,
     )
     return {"notes": notes}
 

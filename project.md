@@ -30,7 +30,7 @@ So: all logic lives in the Python backend, the admin UI is auto-generated (SQLAd
 Backend
 - Python 3.12, FastAPI, Pydantic v2, pydantic-settings, Uvicorn (**single worker**, see section 9), `tzdata` (timezone data on Windows)
 - SQLAlchemy 2.x (**sync** sessions — simpler, single user) + Alembic (`render_as_batch=True`, required for SQLite ALTERs), SQLite file DB
-- Embeddings: `fastembed` (local) with a **multilingual** model, default `intfloat/multilingual-e5-small` (configurable via `EMBEDDING_MODEL`). Chats are often mixed-language; the English-only default model would retrieve poorly.
+- Embeddings: `fastembed` (local) with a **multilingual** model, default `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (configurable via `EMBEDDING_MODEL`; `multilingual-e5-small` is not offered by fastembed). Chats are often mixed-language; the English-only default model would retrieve poorly.
 - Vector search: embeddings stored as `float32` BLOBs, brute-force cosine similarity with numpy (a few thousand notes at most — this is fast enough). `sqlite-vec` is an optional later upgrade behind the same `retrieval.py` interface.
 - LLM: switchable with `LLM_PROVIDER` (`openai` or `anthropic`); currently OpenAI `gpt-4o-mini` for both roles. Anthropic Python SDK / OpenAI Python SDK.
   - `LLM_MODEL` (default `claude-sonnet-5-5`) for drafting replies.
@@ -143,7 +143,7 @@ All tables have `id` (int PK), `created_at`, `updated_at`. All datetimes are sto
 - **style_profile**: `contact_id`, `description`, `tone_defaults` (json), `examples` (json, a few short real `me` messages), `status` (`pending` | `active` | `archived`), `version`. Exactly one `active` per contact.
 - **suggestion_log**: `contact_id`, `context_hash`, `request` (json, ids only), `suggestions` (json), `warnings` (json), `tone`, `chosen_index` (nullable), `final_text` (nullable), `prompt_version`, `model`, `input_tokens`, `output_tokens`, `latency_ms`
 - **reminder**: `contact_id`, `title`, `due_at` (UTC), `origin` (`promise` | `date` | `manual`), `origin_key` (unique, for idempotency), `done`, `notified_at`
-- **job_state**: `job_name` (unique), `last_message_id` (watermark), `last_run_at`, `last_status`
+- **job_state**: `job_name` (unique), `last_message_id` (watermark), `cursor_at` (time watermark), `last_run_at`, `last_status`
 - **setting**: `key` (unique), `value` (json). Keys: `paused` (bool), `default_tone`, `recent_messages_n` (25), `notes_top_k` (5), `suggest_cache_seconds` (60). (Timezone is `TIMEZONE` in `.env`.)
 
 ## 6. Ingest and dedupe rules

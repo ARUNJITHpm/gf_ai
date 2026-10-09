@@ -14,6 +14,7 @@ class JobState(TimestampMixin, Base):
 
     job_name: Mapped[str] = mapped_column(String(100), unique=True)
     last_message_id: Mapped[int | None]  # watermark: highest message id processed
+    cursor_at: Mapped[datetime | None]  # time watermark, for jobs that work by message age
     last_run_at: Mapped[datetime | None]
     last_status: Mapped[str | None] = mapped_column(String(200))
 

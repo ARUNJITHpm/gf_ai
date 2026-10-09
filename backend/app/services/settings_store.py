@@ -25,6 +25,9 @@ SETTINGS: dict[str, SettingSpec] = {
     "default_tone": SettingSpec("warm", str, "Tone used when the app doesn't ask for one."),
     "recent_messages_n": SettingSpec(25, int, "How many recent messages the model sees."),
     "notes_top_k": SettingSpec(5, int, "How many approved notes are retrieved per request."),
+    "notes_min_score": SettingSpec(
+        0.2, float, "Minimum similarity (0-1) for a note to be used in a prompt."
+    ),
     "suggest_cache_seconds": SettingSpec(60, int, "Reuse identical /suggest results this long."),
 }
 
@@ -35,9 +38,11 @@ def validate_setting(key: str, value: Any) -> Any:
     if spec is None:
         raise ValueError(f"unknown setting {key!r}; known: {sorted(SETTINGS)}")
     # bool is a subclass of int; don't let `true` pass as an int or 1 as a bool.
+    if spec.type is float and type(value) is int:
+        value = float(value)
     if type(value) is not spec.type:
         raise ValueError(f"{key} must be a {spec.type.__name__} (JSON), got {value!r}")
-    if isinstance(value, int) and not isinstance(value, bool) and value < 0:
+    if isinstance(value, int | float) and not isinstance(value, bool) and value < 0:
         raise ValueError(f"{key} must not be negative")
     return value
 

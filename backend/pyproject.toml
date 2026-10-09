@@ -6,10 +6,13 @@ requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
     "anthropic>=1.13.0",
+    "apscheduler>=3.11.3",
     "bcrypt>=5.0.0",
     "fastapi>=0.143.0",
+    "fastembed>=0.9.0",
     "itsdangerous>=2.2.0",
     "langgraph>=1.2.14",
+    "numpy>=2.5.3",
     "openai>=3.27.0",
     "pydantic-settings>=2.15.0",
     "python-multipart>=0.0.32",
@@ -51,3 +54,7 @@ addopts = "-q"
 filterwarnings = [
     "error",
 ]
+
+[[tool.mypy.overrides]]
+module = ["apscheduler.*"]
+ignore_missing_imports = true

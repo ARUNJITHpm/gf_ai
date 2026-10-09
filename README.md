@@ -17,8 +17,8 @@ A personal assistant that suggests WhatsApp replies in my voice. It reads the ch
 | P2 Ingest + WhatsApp export import | ✅ done (real-data import is up to you, see below) |
 | P3 Admin (SQLAdmin) | ✅ done (set your admin password, see below) |
 | P4 Agent + `/suggest` + CLI | ✅ done; running on OpenAI `gpt-4o-mini`, evals 10/10 |
-| P5 Memory jobs | next |
-| P6 Android app | not started |
+| P5 Memory jobs | ✅ done |
+| P6 Android app | next |
 
 ## Backend
 
@@ -95,6 +95,28 @@ How it works: the last 25 messages, all active pinned facts, up to 5 approved no
 
 **Evals:** `uv run python -m evals.run` runs 10 synthetic scenarios (upset partner, prompt injection, rule bait, Manglish, …) against the real model and prints the replies for you to read. It costs a few cents. Run it again after any change to `app/agent/prompts.py`.
 
+### Memory and background jobs
+
+While the server runs, these jobs run in the background. Each records its last run and result in the admin under **Job states**.
+
+| Job | Every | What it does |
+|---|---|---|
+| `linker` | 5 min | Matches messages you sent to the suggestion they came from (fills `final_text`) |
+| `extractor` | 15 min | Proposes durable facts from new messages as **pending** notes (when 50+ new messages are waiting, or one has waited a day) |
+| `promises` | 15 min | Turns your recent commitments ("I'll call you tonight") into reminders |
+| `date_reminders` | daily | Reminders 7 days and 1 day before pinned dates (09:00 local) |
+| `summarizer` | daily | Rolls chat older than 30 days into weekly **pending** summary notes |
+| `style` | weekly | Drafts a **pending** style profile once you've sent 20+ new messages |
+
+Nothing becomes active by itself. Approve notes in **Memory notes**, and activate style profiles in **Style profiles → Actions → Activate**.
+
+- Run a job now: `uv run python -m app.cli run-job extractor`, or `--all`.
+- After changing `EMBEDDING_MODEL`: `uv run python -m app.cli reembed`.
+- `ENABLE_JOBS=false` in `.env` turns the jobs off.
+- After importing a long history, expect the first extractor and summarizer runs to take a while and to fill the review queue (roughly one model call per 80 messages, or per week of old chat). With gpt-4o-mini that costs cents.
+
+**Endpoints for the phone:** `POST /suggestions/{id}/feedback` `{"chosen_index": 1}`, `GET /reminders/due?within_hours=24`, `POST /reminders/{id}/done`.
+
 ### Import your chat history
 
 On the phone: open the chat → ⋮ → More → **Export chat** → **Without media**, and send the file to your PC. Then:
@@ -167,6 +189,12 @@ Choices made where the spec was open. See also `project.md` §15.
 - **Note retrieval** in Phase 4 returns the most recently updated approved notes; Phase 5 switches it to embedding similarity.
 - **LangSmith tracing** is forced off in code (`app/agent/llm.py`) because LangGraph installs it.
 - **Rate limiter buckets are per app instance** (and per client IP), so separate apps don't share limits.
+- **Embedding model:** `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (220 MB, local). The spec's `multilingual-e5-small` isn't available in fastembed, and `multilingual-e5-large` is 2.2 GB. It is good for English; on a quick check it was weaker for Manglish. Models are cached in the data folder (`%LOCALAPPDATA%\reply-assistant\models`), not in Temp.
+- **Note retrieval:** cosine similarity between the contact's last 3 messages and approved notes; top `notes_top_k` with score ≥ `notes_min_score` (setting, default 0.2). Notes are embedded lazily on first use, so approving in the admin is instant, and they are re-embedded automatically when the model changes.
+- **Jobs run in-process** (APScheduler) and are guarded by an OS file lock (`jobs.lock` in the data folder), so with several server processes only one runs jobs. Every job is idempotent: watermarks are saved in the same transaction as the job's output, and reminders use unique `origin_key`s. Job failures are recorded as `error: <Type>` and never crash the app.
+- **Promises** only come from your messages of the last 3 days, so an imported history doesn't create hundreds of overdue reminders. A promise with no time, or a time before the message, is due 3 hours after it.
+- **The summarizer** tracks both a time cursor and a message-id cursor (`job_state.cursor_at`, migration 0002), so old messages imported later still get summarized.
+- **The style refresh** uses `LLM_MODEL` (quality) and the other jobs use `LLM_FAST_MODEL`. Examples in a style profile are picked by index from your real messages, so they're always verbatim.
 - **`greenlet`** (via `sqlalchemy[asyncio]`) is installed because SQLAdmin imports SQLAlchemy's async module even when used with sync sessions.
 - **`tzdata`** added as a dependency: Windows has no system timezone database, and timezones are needed to convert export times.
 - **`httpx2`** arrives with the Anthropic SDK 1.x, and Starlette's TestClient uses it, so the old `httpx` deprecation warning is gone (no filter needed).

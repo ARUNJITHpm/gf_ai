@@ -192,7 +192,7 @@ def test_only_approved_notes_in_prompt(
         [
             MemoryNote(
                 contact_id=contact.id,
-                content="APPROVED-NOTE",
+                content="APPROVED-NOTE her boss at work is strict",
                 status=NoteStatus.APPROVED,
                 origin=NoteOrigin.MANUAL,
             ),

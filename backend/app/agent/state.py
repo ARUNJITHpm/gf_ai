@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.agent.llm import LLMClient, Usage
 from app.agent.schemas import DraftReply
 from app.config import Settings
+from app.memory.embeddings import Embedder
 from app.models import Contact, MemoryNote, Message, PinnedFact, StyleProfile
 
 
@@ -38,4 +39,6 @@ class AgentDeps:
     now: datetime
     recent_messages_n: int = 25
     notes_top_k: int = 5
+    notes_min_score: float = 0.0
+    embedder: Embedder | None = None
     risk_context_messages: int = 8

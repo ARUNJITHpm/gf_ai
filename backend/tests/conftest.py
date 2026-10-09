@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.main import create_app
+from app.memory.embeddings import FakeEmbedder
 from app.models import Base
 
 TEST_API_KEY = "test-api-key-0123456789"
@@ -26,6 +27,7 @@ def settings(db_url: str) -> Settings:
         api_key=TEST_API_KEY,  # type: ignore[arg-type]
         database_url=db_url,
         timezone="Asia/Kolkata",  # same as the real setup; exercises local -> UTC conversion
+        enable_jobs=False,
     )
 
 
@@ -33,6 +35,7 @@ def settings(db_url: str) -> Settings:
 def app(settings: Settings) -> FastAPI:
     app = create_app(settings)
     Base.metadata.create_all(app.state.engine)
+    app.state.embedder = FakeEmbedder()  # never download the real model in tests
     return app
 
 

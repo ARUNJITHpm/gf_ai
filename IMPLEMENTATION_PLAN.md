@@ -199,21 +199,21 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 ## Phase 5 — Memory and background jobs
 
-- [ ] **P5.1 Embedder** — `Embedder` protocol, `FastEmbedEmbedder` (multilingual e5, correct `query:`/`passage:` prefixes), `FakeEmbedder` (deterministic hash vectors).
-- [ ] **P5.2 Embed on approve** — admin approve action + `memory/pinned` API compute embeddings; CLI `reembed` for model changes.
-- [ ] **P5.3 Retrieval** — numpy cosine over approved notes for the contact, top-k + min score. Replace the P4.4 stub.
+- [x] **P5.1 Embedder** — `Embedder` protocol, `FastEmbedEmbedder` (multilingual e5, correct `query:`/`passage:` prefixes), `FakeEmbedder` (deterministic hash vectors).
+- [x] **P5.2 Embed on approve** (done lazily at retrieval instead, so approving is instant; CLI `reembed` exists) — admin approve action + `memory/pinned` API compute embeddings; CLI `reembed` for model changes.
+- [x] **P5.3 Retrieval** — numpy cosine over approved notes for the contact, top-k + min score. Replace the P4.4 stub.
   - Done when: tests: pending/rejected never returned; ordering by similarity.
-- [ ] **P5.4 Job infrastructure** — `jobs/scheduler.py`, start/stop in lifespan, `job_state` watermark helpers, guard against running when `workers > 1`. CLI `run-job <name>` for manual runs.
-- [ ] **P5.5 Extractor** — `LLM_FAST_MODEL`, new text messages since watermark → pending notes, near-duplicate skip.
-- [ ] **P5.6 Promise tracker** — `me` messages → reminders with `origin_key`.
-- [ ] **P5.7 Summarizer** — chunks of messages older than 30 days → pending summary notes.
-- [ ] **P5.8 Date reminders** — yearly recurrence, 7d and 1d offsets.
-- [ ] **P5.9 Reminders API** — `GET /reminders/due`, `POST /reminders/{id}/done`.
-- [ ] **P5.10 Feedback + linker** — `POST /suggestions/{id}/feedback`; linker job matches `me` messages to recent suggestions by similarity.
-- [ ] **P5.11 Style refresh** — weekly pending style profile from recent `me` messages + suggestion/final diffs.
-- [ ] **P5.12 Idempotency tests** — each job run twice → no duplicate rows.
+- [x] **P5.4 Job infrastructure** — `jobs/scheduler.py`, start/stop in lifespan, `job_state` watermark helpers, guard against running when `workers > 1`. CLI `run-job <name>` for manual runs.
+- [x] **P5.5 Extractor** — `LLM_FAST_MODEL`, new text messages since watermark → pending notes, near-duplicate skip.
+- [x] **P5.6 Promise tracker** — `me` messages → reminders with `origin_key`.
+- [x] **P5.7 Summarizer** — chunks of messages older than 30 days → pending summary notes.
+- [x] **P5.8 Date reminders** — yearly recurrence, 7d and 1d offsets.
+- [x] **P5.9 Reminders API** — `GET /reminders/due`, `POST /reminders/{id}/done`.
+- [x] **P5.10 Feedback + linker** — `POST /suggestions/{id}/feedback`; linker job matches `me` messages to recent suggestions by similarity.
+- [x] **P5.11 Style refresh** — weekly pending style profile from recent `me` messages + suggestion/final diffs.
+- [x] **P5.12 Idempotency tests** — each job run twice → no duplicate rows.
 
-**Gate P5:** §13 Phase 5 checks pass.
+**Gate P5: ✅ passed 2026-10-09** (181 tests; extractor, promises and style smoke-tested on gpt-4o-mini + real embeddings). §13 Phase 5 checks pass.
 
 ---
 

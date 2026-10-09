@@ -61,6 +61,7 @@ def suggest(
             settings=settings,
             tone=body.tone,
             draft_text=body.draft_text,
+            embedder=request.app.state.embedder,
         )
     except DraftFailed as exc:
         log_event("suggest.failed", contact_id=contact.id, reason="invalid_output")
