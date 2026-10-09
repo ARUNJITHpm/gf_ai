@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, Depends, FastAPI
 
 from app import __version__
-from app.api import auth, health
+from app.api import auth, health, importer, ingest
 from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
 from app.logging_utils import configure_logging, log_event
@@ -36,5 +36,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Everything else requires X-API-Key. Add new routers here.
     protected = APIRouter(dependencies=[Depends(require_api_key)])
     protected.include_router(auth.router)
+    protected.include_router(ingest.router)
+    protected.include_router(importer.router)
     app.include_router(protected)
     return app

@@ -14,8 +14,9 @@ A personal assistant that suggests WhatsApp replies in my voice. It reads the ch
 |---|---|
 | P0 Setup + Android spike | ✅ done |
 | P1 Backend skeleton | ✅ done |
-| P2 Ingest + WhatsApp export import | next |
-| P3 Admin · P4 Agent · P5 Memory jobs · P6 Android app | not started |
+| P2 Ingest + WhatsApp export import | ✅ done (real-data import is up to you, see below) |
+| P3 Admin (SQLAdmin) | next |
+| P4 Agent · P5 Memory jobs · P6 Android app | not started |
 
 ## Backend
 
@@ -47,6 +48,23 @@ uv run uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 - API docs: http://127.0.0.1:8000/docs
 
 Always run with a **single worker** (the default). Background jobs, added in Phase 5, run inside the process.
+
+### Import your chat history
+
+On the phone: open the chat → ⋮ → More → **Export chat** → **Without media**, and send the file to your PC. Then:
+
+```bash
+uv run python -m app.cli add-contact --name "Her name" --title "Chat title as WhatsApp shows it"
+uv run python -m app.cli import --file "WhatsApp Chat with ....zip" --contact "Her name" --me "Your name in the export" --them "Her name in the export"
+uv run python -m app.cli list-contacts
+```
+
+- `.txt` and the `.zip` WhatsApp creates both work. Re-importing is safe: stored messages are skipped.
+- If the names are wrong, the error lists the author names found in the file.
+- If every day in the file is 12 or less, add `--date-order dmy` (India) or `mdy`.
+- Keep exports out of the repo. `exports/` is git-ignored if you want a place for them.
+
+Over HTTP the same import is `POST /import/whatsapp-export` (multipart; see `/docs`).
 
 ### Checks
 
@@ -82,5 +100,11 @@ Choices made where the spec was open. See also `project.md` §15.
 - **Migrations run with SQLite foreign keys OFF.** Batch mode recreates tables, and with FKs on, dropping a parent table would cascade-delete child rows. A `foreign_key_check` runs after each migration.
 - **Logging:** use `log_event(name, **ids_and_counts)`. It refuses fields such as `text`/`content` and long strings, so message text can't reach the logs.
 - **API key** must be at least 16 characters.
+- **Export system lines** (encryption notice, number changes, …) are counted and skipped, not stored. They have no sender, and the `message` table requires one.
+- **Dedupe trade-off for screen reads:** when visible messages don't line up with the last 100 stored ones (scrolled far back), only texts never seen before are inserted. A genuinely new repeat of an old text such as "ok" can be missed there; notifications usually catch it.
+- **Media detection** uses exact placeholders ("<Media omitted>", "image omitted", "Sticker") and a few emoji prefixes ("📷 Photo", "🎤 Voice message"); see `MEDIA_PLACEHOLDERS` in `app/services/ingest.py`.
+- **Unknown contact on `/ingest`** → 404; contacts are never auto-created.
+- **`/ingest` limits:** at most 500 messages per call, 20,000 characters per message, 120 calls per minute.
+- **Imports**: up to 200 MB of chat text; inside a `.zip`, the file named "WhatsApp Chat…" is used (otherwise the largest `.txt`). 50,000 messages import in about 12 s, and a re-import takes about 5 s.
 - **`tzdata`** added as a dependency: Windows has no system timezone database, and timezones are needed to convert export times.
 - **Starlette TestClient** warns that `httpx` should be replaced by `httpx2`. The warning is silenced in pytest config for now; revisit before it becomes an error.

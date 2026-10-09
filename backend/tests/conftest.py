@@ -21,7 +21,12 @@ def db_url(tmp_path: Path) -> str:
 @pytest.fixture
 def settings(db_url: str) -> Settings:
     # _env_file=None: tests must never read the developer's real .env.
-    return Settings(_env_file=None, api_key=TEST_API_KEY, database_url=db_url)  # type: ignore[arg-type]
+    return Settings(
+        _env_file=None,  # type: ignore[call-arg]
+        api_key=TEST_API_KEY,  # type: ignore[arg-type]
+        database_url=db_url,
+        timezone="Asia/Kolkata",  # same as the real setup; exercises local -> UTC conversion
+    )
 
 
 @pytest.fixture

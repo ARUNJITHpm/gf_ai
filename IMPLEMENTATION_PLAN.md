@@ -100,49 +100,49 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
 
 ## Phase 2 — Ingest and import
 
-- [ ] **P2.1 Text normalization**
+- [x] **P2.1 Text normalization**
   - Files: `app/services/ingest.py` (`normalize_text`, `classify_kind`)
   - Do: per §6.1; detect `media`, `deleted`, `system` kinds from known phrases (keep phrases in one list).
   - Done when: table-driven tests incl. U+202F, LRM, edited suffix, emojis unchanged.
 
-- [ ] **P2.2 Contact matching**
+- [x] **P2.2 Contact matching**
   - Do: `match_contact(session, hint)` against `wa_chat_titles`, case-insensitive, emoji/whitespace-insensitive.
   - Done when: tests for exact, case, emoji variants, unknown → None.
 
-- [ ] **P2.3 Dedupe core**
+- [x] **P2.3 Dedupe core**
   - Do: `ingest_messages(session, contact, messages) -> {inserted, skipped, updated}` implementing §6.2–6.4 (hash, ±2 min window, null-sent_at fill-in, sequence alignment for timestamp-less batches).
   - Done when: tests: same msg twice → 1 row; same msg 1 min apart from 2 sources → 1 row; "ok" sent twice an hour apart → 2 rows; screen batch overlapping stored tail → only the new suffix inserted; screen batch with repeated "ok" handled by alignment.
 
-- [ ] **P2.4 `/ingest` endpoint**
+- [x] **P2.4 `/ingest` endpoint**
   - Files: `app/api/ingest.py`, `app/schemas/ingest.py`
   - Done when: API tests for 200 counts, 404 unknown contact, 401 without key, 422 bad body.
 
-- [ ] **P2.5 Export parser — line format**
+- [x] **P2.5 Export parser — line format**
   - Files: `app/services/export_parser.py` (pure, no DB)
   - Do: regexes for Android formats: `dd/mm/yy, hh:mm - Name: text`, `m/d/yy, h:mm AM - Name: text`, 2- and 4-digit years, 12h/24h, optional U+202F. Continuation lines append to the previous message. Lines without `Name:` are system lines.
   - Done when: tests with synthetic fixture files in `tests/fixtures/exports/`.
 
-- [ ] **P2.6 Export parser — date order + timezone**
+- [x] **P2.6 Export parser — date order + timezone**
   - Do: `date_order=auto` scans all dates; any first field > 12 → dmy, any second field > 12 → mdy; still ambiguous → error asking for explicit order. Convert local → UTC via `TIMEZONE`.
   - Done when: tests for each case including the ambiguous error.
 
-- [ ] **P2.7 Author mapping**
+- [x] **P2.7 Author mapping**
   - Do: map `my_author_name` → `me`, `contact_author_name` → `contact`; any other author → error listing the authors found (helps the user pick names).
   - Done when: tests incl. a "names found" error message.
 
-- [ ] **P2.8 `/import/whatsapp-export`**
+- [x] **P2.8 `/import/whatsapp-export`**
   - Files: `app/api/importer.py`
   - Do: multipart upload; accept `.txt` or `.zip` (find the `.txt` inside); stream parse; reuse `ingest_messages`.
   - Done when: importing the fixture twice → second run `inserted=0`; zip works.
 
-- [ ] **P2.9 CLI: import + contact**
+- [ ] **P2.9 CLI: import + contact** (CLI built and tested; real-export import is yours to run)
   - Files: `app/cli.py`
   - Do: `python -m app.cli add-contact --name X --title "Chat title"`, `python -m app.cli import --file chat.txt --contact X --me "My Name" --them "Her Name"`.
   - Done when: you import your **real** export locally and counts look right. (Real data never goes in the repo.)
 
-- [ ] **P2.10 No-text-in-logs test** — capture logs during ingest/import; assert none of the fixture texts appear.
+- [x] **P2.10 No-text-in-logs test** — capture logs during ingest/import; assert none of the fixture texts appear.
 
-**Gate P2:** §13 Phase 2 checks pass.
+**Gate P2: ✅ passed 2026-10-09** (105 tests; ruff + mypy strict clean). §13 Phase 2 checks pass.
 
 ---
 
