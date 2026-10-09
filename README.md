@@ -18,7 +18,7 @@ A personal assistant that suggests WhatsApp replies in my voice. It reads the ch
 | P3 Admin (SQLAdmin) | ✅ done (set your admin password, see below) |
 | P4 Agent + `/suggest` + CLI | ✅ done; running on OpenAI `gpt-4o-mini`, evals 10/10 |
 | P5 Memory jobs | ✅ done |
-| P6 Android app | ✅ done on a Redmi 9 over USB; Tailscale and offline-queue check still open |
+| P6 Android app | ✅ done on a Redmi 9 over USB (incl. offline queue); Tailscale still open |
 
 ## Backend
 

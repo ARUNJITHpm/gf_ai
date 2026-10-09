@@ -246,7 +246,7 @@ Split into four shippable sub-phases. Reuse the P0 spike learnings; start a clea
 - [x] **P6.13** Reminder polling via WorkManager → local notification. (Built; not yet seen firing on the device.)
 - [x] **P6.14** README: sideloading, restricted settings (Android 13+), battery optimization, Tailscale.
 
-**Gate P6: ✅ mostly passed 2026-10-10** on the Redmi 9 over USB: configured from a fresh install, notification ingested, bubble shown in the chat, suggestions fetched (3.4–5.5 s), chosen text inserted without sending, feedback recorded, sent message linked. Still open: the offline-queue check (backend stopped, then restarted) and Tailscale. §13 Phase 6 acceptance on a fresh install.
+**Gate P6: ✅ mostly passed 2026-10-10** on the Redmi 9 over USB: configured from a fresh install, notification ingested, bubble shown in the chat, suggestions fetched (3.4–5.5 s), chosen text inserted without sending, feedback recorded, sent message linked. Offline queue verified the same day: with the backend stopped, 2 notification messages were queued on the phone and retried with backoff (RETRY ×2), then delivered 9 s after the backend restarted, once each, timestamps intact. Still open: Tailscale. §13 Phase 6 acceptance on a fresh install.
 
 ---
 
