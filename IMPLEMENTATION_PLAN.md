@@ -30,25 +30,25 @@ Goal: prove the risky part (reading WhatsApp's screen and inserting text) works 
   - Status: Python 3.12, uv, Git, adb, JDK 17 and Android SDK (`D:\Android\Sdk`, android-37) are installed. Still to do: Tailscale (PC + phone), connect the phone.
   - Done when: `uv --version`, `git --version`, `adb devices` (shows the phone) all work.
 
-- [ ] **P0.2 Repo**
+- [x] **P0.2 Repo**
   - Do: use the current project folder (`gf_ai`) as the repo. `git init`, add `.gitignore` (§12).
   - Done when: first commit exists; `.env` and `*.db` are ignored.
 
 > Spike app is built (`spikes/a11y-dump`, AGP 9.3.3, Gradle 9.8.1, compileSdk 37). Run steps: `spikes/README.md`. Record results in `spikes/notes.md`.
 
-- [ ] **P0.3 Accessibility spike app** (throwaway, `spikes/a11y-dump/`)
+- [x] **P0.3 Accessibility spike app** (throwaway, `spikes/a11y-dump/`)
   - Do: Android Studio "Empty Activity" project. Add an `AccessibilityService` with `packageNames="com.whatsapp"`, `canRetrieveWindowContent=true`, `flagReportViewIds`. On `TYPE_WINDOW_CONTENT_CHANGED`, walk `rootInActiveWindow` and `Log.d` each node: class, viewIdResourceName, text, contentDescription, boundsInScreen.
   - Done when: in `adb logcat`, with a chat open, you see message texts with left/right bounds, the chat title node, and the input field node id.
 
-- [ ] **P0.4 Insert-text spike**
+- [x] **P0.4 Insert-text spike**
   - Do: from the service, find the input `EditText` and call `ACTION_SET_TEXT` with "test from spike". Do **not** touch the send button.
   - Done when: the text appears in WhatsApp's box and can be edited/sent by hand.
 
-- [ ] **P0.5 Notification spike**
+- [x] **P0.5 Notification spike** (group flag not tested — no group on test number; covered in P6.4)
   - Do: add a `NotificationListenerService`, log `EXTRA_TITLE`, `EXTRA_MESSAGES` (sender, text, time) and `EXTRA_IS_GROUP_CONVERSATION` for `com.whatsapp`.
   - Done when: a message from a test contact appears in logcat with its timestamp. Save a few redacted log samples to `spikes/notes.md` — they become test fixtures in P6.
 
-**Gate P0:** P0.3–P0.5 work on your phone. If any fails, stop and adjust the design (§11) before Phase 1.
+**Gate P0: ✅ passed 2026-10-09** (results: `spikes/notes.md`). P0.3–P0.5 work on your phone. If any fails, stop and adjust the design (§11) before Phase 1.
 
 ---
 
@@ -228,7 +228,7 @@ Split into four shippable sub-phases. Reuse the P0 spike learnings; start a clea
 - Done when: Test connection succeeds from the phone over mobile data.
 
 ### 6b — Notification ingest + outbox
-- [ ] **P6.4** `NotificationListenerService`: parse `MessagingStyle`, filter per §11, map senders.
+- [ ] **P6.4** `NotificationListenerService`: parse `MessagingStyle`, filter per §11, map senders. Verify `EXTRA_IS_GROUP_CONVERSATION` with a real group message (not covered in P0).
 - [ ] **P6.5** Room outbox + WorkManager retry with backoff.
 - [ ] **P6.6** Unit tests for notification parsing using P0.5 samples.
 - Done when: a message from her shows up in the admin Message view; with backend stopped, it arrives after restart.
