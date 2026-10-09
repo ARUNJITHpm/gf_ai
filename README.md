@@ -191,6 +191,22 @@ Requires JDK 17 and the Android SDK (`ANDROID_HOME`). From `android/`:
 - **Anywhere (Tailscale):** install Tailscale on PC and phone and sign in to the same tailnet. On the PC: `tailscale serve --bg 8000`, which gives `https://<pc-name>.<tailnet>.ts.net`. Put that URL in the app. Plain HTTP is only allowed to `127.0.0.1`/`localhost` (`res/xml/network_security_config.xml`), so use the HTTPS URL.
 - If the backend is unreachable, messages wait in the phone's outbox (Room) and are delivered later. Settings shows how many are waiting.
 
+### Memory screen (notes and facts about her)
+
+Open it from Settings → **Memory**, or tap **✎** in the 💬 panel while chatting.
+
+| Type | Example | How it's used |
+|---|---|---|
+| **Note** | "She's stressed about the move; I want to be more patient" | Used only when the chat is related. Write as many as you like. |
+| **Fact** / **Situation** / **Inside joke** | "She's vegetarian" / "We're long distance until March" / "potato" | Always sent to the model. Keep them few. |
+| **Rule** | "Never joke about her weight" | Always sent; the model must not break it, and the risk check enforces it |
+| **Date** | Birthday 17 Oct, every year | Always sent, plus reminders 7 days and 1 day before |
+
+- **Saved** lists everything. Facts can be paused (switch) or deleted; notes can be deleted.
+- **Review** shows notes the assistant proposed from your chats; nothing is used until you approve it.
+- Notes you write yourself are approved immediately.
+- API: `GET/POST /memory/pinned`, `PATCH/DELETE /memory/pinned/{id}`, `GET/POST /memory/notes?status=`, `POST /memory/notes/{id}/approve|reject`, `DELETE /memory/notes/{id}`.
+
 ### When WhatsApp updates and the bubble stops working
 
 All WhatsApp-specific view ids live in `WhatsAppScreenParser.kt`. In the app tap **Debug: dump next chat screen**, then open the chat. A redacted tree (text replaced by lengths) is saved under the app's files (`adb shell run-as com.example.replyassistant ls files/dumps`). Turn it into a test fixture like `src/test/resources/screen_wa_2_26_39.json` (with made-up text) and fix the ids.

@@ -8,7 +8,7 @@ from sqlalchemy.exc import OperationalError
 
 from app import __version__
 from app.admin.setup import mount_admin
-from app.api import auth, health, importer, ingest, memory_api, suggest
+from app.api import auth, health, importer, ingest, memory_api, memory_edit, suggest
 from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
 from app.jobs.scheduler import start_scheduler, stop_scheduler
@@ -55,6 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     protected.include_router(importer.router)
     protected.include_router(suggest.router)
     protected.include_router(memory_api.router)
+    protected.include_router(memory_edit.router)
     app.include_router(protected)
 
     # /admin uses its own login (session cookie), not the API key.

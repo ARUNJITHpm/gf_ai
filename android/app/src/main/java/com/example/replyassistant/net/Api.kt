@@ -7,8 +7,11 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -33,6 +36,38 @@ interface BackendApi {
 
     @GET("reminders/due")
     suspend fun remindersDue(@Query("within_hours") withinHours: Int): List<ReminderOut>
+
+    // --- memory: pinned facts (always used) and notes (used when relevant) ---
+
+    @GET("memory/pinned")
+    suspend fun facts(@Query("contact_hint") contactHint: String): List<FactOut>
+
+    @POST("memory/pinned")
+    suspend fun createFact(@Body body: FactIn): FactOut
+
+    @PATCH("memory/pinned/{id}")
+    suspend fun updateFact(@Path("id") id: Int, @Body body: FactPatch): FactOut
+
+    @DELETE("memory/pinned/{id}")
+    suspend fun deleteFact(@Path("id") id: Int): Response<Unit>
+
+    @GET("memory/notes")
+    suspend fun notes(
+        @Query("contact_hint") contactHint: String,
+        @Query("status") status: String,
+    ): List<NoteOut>
+
+    @POST("memory/notes")
+    suspend fun createNote(@Body body: NoteIn): NoteOut
+
+    @POST("memory/notes/{id}/approve")
+    suspend fun approveNote(@Path("id") id: Int): NoteOut
+
+    @POST("memory/notes/{id}/reject")
+    suspend fun rejectNote(@Path("id") id: Int): NoteOut
+
+    @DELETE("memory/notes/{id}")
+    suspend fun deleteNote(@Path("id") id: Int): Response<Unit>
 }
 
 object ApiFactory {
@@ -120,4 +155,45 @@ data class ReminderOut(
     val title: String,
     @SerialName("due_at") val dueAt: String,
     val origin: String,
+)
+
+/** category: "profile" | "date" | "rule" | "inside_joke" | "context" */
+@Serializable
+data class FactIn(
+    @SerialName("contact_hint") val contactHint: String,
+    val category: String,
+    val content: String,
+    @SerialName("event_date") val eventDate: String? = null, // YYYY-MM-DD
+    val recurrence: String = "none", // "none" | "yearly"
+)
+
+/** Only the fields that are set are changed (nulls are omitted from the JSON). */
+@Serializable
+data class FactPatch(
+    val content: String? = null,
+    val active: Boolean? = null,
+)
+
+@Serializable
+data class FactOut(
+    val id: Int,
+    val category: String,
+    val content: String,
+    @SerialName("event_date") val eventDate: String? = null,
+    val recurrence: String,
+    val active: Boolean,
+)
+
+@Serializable
+data class NoteIn(
+    @SerialName("contact_hint") val contactHint: String,
+    val content: String,
+)
+
+@Serializable
+data class NoteOut(
+    val id: Int,
+    val content: String,
+    val status: String, // "approved" | "pending" | "rejected"
+    val origin: String, // "manual" | "extractor" | "summarizer"
 )

@@ -93,6 +93,10 @@ class SettingsActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("Reply Assistant", style = MaterialTheme.typography.headlineSmall)
+            Button(
+                { startActivity(Intent(this@SettingsActivity, MemoryActivity::class.java)) },
+                Modifier.fillMaxWidth(),
+            ) { Text("Memory: notes, facts, rules, dates") }
             Text(
                 "Suggests replies in the chat below. It never sends anything: you edit and send.",
                 style = MaterialTheme.typography.bodyMedium,

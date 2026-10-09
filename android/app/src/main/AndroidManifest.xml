@@ -26,6 +26,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.MemoryActivity"
+            android:exported="false"
+            android:label="Memory" />
+
         <service
             android:name=".screen.ReplyAccessibilityService"
             android:exported="false"

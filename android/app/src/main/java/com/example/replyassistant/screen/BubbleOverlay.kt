@@ -1,6 +1,7 @@
 package com.example.replyassistant.screen
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
@@ -16,6 +17,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.example.replyassistant.data.Prefs
 import com.example.replyassistant.net.SuggestResponse
+import com.example.replyassistant.ui.MemoryActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -121,6 +123,12 @@ class BubbleOverlay(private val service: ReplyAccessibilityService) {
             textSize = 16f
             setTypeface(typeface, Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        header.addView(smallButton("✎") {
+            closePanel()
+            service.startActivity(
+                Intent(service, MemoryActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
         })
         header.addView(smallButton("↻") { load(status, list) })
         header.addView(smallButton("✕") { closePanel() })

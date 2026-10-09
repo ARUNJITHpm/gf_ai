@@ -246,6 +246,11 @@ Split into four shippable sub-phases. Reuse the P0 spike learnings; start a clea
 - [x] **P6.13** Reminder polling via WorkManager → local notification. (Built; not yet seen firing on the device.)
 - [x] **P6.14** README: sideloading, restricted settings (Android 13+), battery optimization, Tailscale.
 
+### 6e: Memory screen (added 2026-10-10 on request)
+- [x] **P6.15** Backend `/memory/pinned` CRUD and `/memory/notes` (list by status, create = approved, approve/reject/delete). These were in spec §7 but had no plan task. 6 tests, including one end to end: a note saved from the phone appears in the suggestion prompt.
+- [x] **P6.16** App Memory screen (Add / Saved / Review tabs), opened from Settings and from ✎ in the bubble panel.
+- [ ] **P6.17** Try it on the device.
+
 **Gate P6: ✅ mostly passed 2026-10-10** on the Redmi 9 over USB: configured from a fresh install, notification ingested, bubble shown in the chat, suggestions fetched (3.4–5.5 s), chosen text inserted without sending, feedback recorded, sent message linked. Offline queue verified the same day: with the backend stopped, 2 notification messages were queued on the phone and retried with backoff (RETRY ×2), then delivered 9 s after the backend restarted, once each, timestamps intact. Still open: Tailscale. §13 Phase 6 acceptance on a fresh install.
 
 ---
