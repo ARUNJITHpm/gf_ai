@@ -40,7 +40,7 @@ class WhatsAppScreenParserTest {
     fun parsesRealScreenStructure() {
         val (root, width) = load("screen_wa_2_26_39.json")
         val screen = WhatsAppScreenParser.parse(root, width)
-        assertEquals("Asha 🌸", screen.title)
+        assertEquals("Nithara 🌸", screen.title)
         assertTrue(screen.isChat)
         assertEquals(
             listOf(true to "hi", false to "hey!", true to "how was it", false to "long day, tell u later"),
@@ -73,17 +73,17 @@ class WhatsAppScreenParserTest {
 
     @Test
     fun notAChatWithoutInputBox() {
-        val title = ScreenNode(viewId = "com.whatsapp:id/conversation_contact_name", text = "Asha")
+        val title = ScreenNode(viewId = "com.whatsapp:id/conversation_contact_name", text = "Nithara")
         assertFalse(WhatsAppScreenParser.parse(ScreenNode(children = listOf(title)), 720).isChat)
     }
 
     @Test
     fun titleMatchingIgnoresCaseEmojiAndSpaces() {
-        assertTrue(WhatsAppScreenParser.sameTitle("Asha 🌸", "asha"))
-        assertTrue(WhatsAppScreenParser.sameTitle("  Asha   K ", "asha k"))
-        assertTrue(WhatsAppScreenParser.sameTitle("Asha ❤️", "Asha"))
-        assertFalse(WhatsAppScreenParser.sameTitle("Asha", "Ashanka"))
+        assertTrue(WhatsAppScreenParser.sameTitle("Nithara 🌸", "nithara"))
+        assertTrue(WhatsAppScreenParser.sameTitle("  Nithara   K ", "nithara k"))
+        assertTrue(WhatsAppScreenParser.sameTitle("Nithara ❤️", "Nithara"))
+        assertFalse(WhatsAppScreenParser.sameTitle("Nithara", "Nitharanka"))
         assertFalse(WhatsAppScreenParser.sameTitle("🌸", "🌺"))
-        assertFalse(WhatsAppScreenParser.sameTitle(null, "Asha"))
+        assertFalse(WhatsAppScreenParser.sameTitle(null, "Nithara"))
     }
 }

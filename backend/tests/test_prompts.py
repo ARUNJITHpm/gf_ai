@@ -10,7 +10,7 @@ IST = ZoneInfo("Asia/Kolkata")
 
 def test_render_context_snapshot() -> None:
     contact = Contact(
-        id=1, name="Asha", nicknames=["Ash"], language_notes="Mixes Malayalam and English"
+        id=1, name="Nithara", nicknames=["Nith"], language_notes="Mixes Malayalam and English"
     )
     facts = [
         PinnedFact(
@@ -29,8 +29,8 @@ def test_render_context_snapshot() -> None:
     )
     assert render_context(contact, facts, style) == (
         "<contact>\n"
-        "name: Asha\n"
-        "nicknames: Ash\n"
+        "name: Nithara\n"
+        "nicknames: Nith\n"
         "language notes: Mixes Malayalam and English\n"
         "</contact>\n"
         "<pinned_facts>\n"
@@ -71,14 +71,14 @@ def test_render_messages_snapshot() -> None:
             msg(Sender.CONTACT, "<Media omitted>", MessageKind.MEDIA),
             msg(Sender.ME, "This message was deleted", MessageKind.DELETED),
         ],
-        "Asha",
+        "Nithara",
         IST,
     )
     assert rendered == (
         "<messages>\n"
-        "[Fri 09 Oct 21:00] Asha: hi ‹3\n"
+        "[Fri 09 Oct 21:00] Nithara: hi ‹3\n"
         "[Fri 09 Oct 21:00] Me: hey\n"
-        "[Fri 09 Oct 21:00] Asha: (sent a photo, video or other media)\n"
+        "[Fri 09 Oct 21:00] Nithara: (sent a photo, video or other media)\n"
         "[Fri 09 Oct 21:00] Me: (deleted a message)\n"
         "</messages>"
     )

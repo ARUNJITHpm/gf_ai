@@ -36,7 +36,7 @@ def run_case(case: Case, llm: LLMClient, db_dir: Path) -> bool:
     now = utcnow()
     with create_session_factory(engine)() as session:
         seed_defaults(session)
-        contact = Contact(name="Asha", wa_chat_titles=["Asha"])
+        contact = Contact(name="Nithara", wa_chat_titles=["Nithara"])
         session.add(contact)
         session.commit()
         start = now - timedelta(minutes=len(case.messages))

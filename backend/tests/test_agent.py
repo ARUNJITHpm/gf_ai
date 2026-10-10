@@ -57,7 +57,7 @@ def fake(app: FastAPI) -> FakeLLM:
 
 @pytest.fixture
 def contact(session: Session) -> Contact:
-    contact = Contact(name="Asha", wa_chat_titles=["Asha"], nicknames=["Ash"])
+    contact = Contact(name="Nithara", wa_chat_titles=["Nithara"], nicknames=["Nith"])
     session.add(contact)
     session.commit()
     ingest_messages(
@@ -108,7 +108,7 @@ def facts(session: Session, contact: Contact) -> list[PinnedFact]:
 
 
 def post_suggest(client: TestClient, headers: dict[str, str], **body: object) -> object:
-    payload = {"contact_hint": "Asha", **body}
+    payload = {"contact_hint": "Nithara", **body}
     return client.post("/suggest", json=payload, headers=headers)
 
 
@@ -429,7 +429,7 @@ def test_unknown_contact_and_auth(client: TestClient, auth_headers: dict[str, st
         client.post("/suggest", json={"contact_hint": "Nobody"}, headers=auth_headers).status_code
         == 404
     )
-    assert client.post("/suggest", json={"contact_hint": "Asha"}).status_code == 401
+    assert client.post("/suggest", json={"contact_hint": "Nithara"}).status_code == 401
 
 
 def test_no_message_text_in_logs(

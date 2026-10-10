@@ -52,10 +52,10 @@ def test_classify_kind(text: str, kind: MessageKind) -> None:
 @pytest.mark.parametrize(
     "a,b",
     [
-        ("Asha", "asha"),
-        ("Asha ❤️", "Asha"),
-        ("🌸 Asha  K 🌸", "asha k"),
-        ("‎Asha", "Asha"),
+        ("Nithara", "nithara"),
+        ("Nithara ❤️", "Nithara"),
+        ("🌸 Nithara  K 🌸", "nithara k"),
+        ("‎Nithara", "Nithara"),
     ],
 )
 def test_normalize_title_equal(a: str, b: str) -> None:
@@ -67,14 +67,14 @@ def test_normalize_title_keeps_indic_combining_marks() -> None:
 
 
 def test_match_contact(session: Session) -> None:
-    active = Contact(name="Asha", wa_chat_titles=["Asha ❤️", "Asha K"])
+    active = Contact(name="Nithara", wa_chat_titles=["Nithara ❤️", "Nithara K"])
     inactive = Contact(name="Old", wa_chat_titles=["Old friend"], active=False)
     session.add_all([active, inactive])
     session.commit()
 
-    assert match_contact(session, "asha ❤️") is active
-    assert match_contact(session, "ASHA K") is active
-    assert match_contact(session, "Asha") is active  # emoji-insensitive
+    assert match_contact(session, "nithara ❤️") is active
+    assert match_contact(session, "NITHARA K") is active
+    assert match_contact(session, "Nithara") is active  # emoji-insensitive
     assert match_contact(session, "Old friend") is None  # inactive
     assert match_contact(session, "Someone else") is None
     assert match_contact(session, "  ") is None

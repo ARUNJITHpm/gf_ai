@@ -4,7 +4,7 @@
   "root": {"viewId": "android:id/content", "bounds": [0,55,720,1006], "children": [
     {"viewId": "com.whatsapp:id/toolbar", "bounds": [0,55,720,167], "children": [
       {"viewId": "com.whatsapp:id/whatsapp_toolbar_home", "className": "android.widget.Button", "bounds": [0,63,96,159]},
-      {"viewId": "com.whatsapp:id/conversation_contact_name", "className": "android.widget.TextView", "text": "Asha 🌸", "bounds": [200,82,418,136]}
+      {"viewId": "com.whatsapp:id/conversation_contact_name", "className": "android.widget.TextView", "text": "Nithara 🌸", "bounds": [200,82,418,136]}
     ]},
     {"viewId": "com.whatsapp:id/list", "className": "android.widget.ListView", "bounds": [0,167,720,894], "children": [
       {"viewId": "com.whatsapp:id/conversation_row_date_divider", "text": "TODAY", "bounds": [298,181,422,249]},

@@ -12,12 +12,12 @@ from app.models import Contact, MemoryNote, PinnedFact
 from app.models.enums import MessageSource, NoteOrigin, NoteStatus, Sender
 from app.services.ingest import IncomingMessage, ingest_messages
 
-HINT = {"contact_hint": "Asha 🌸"}
+HINT = {"contact_hint": "Nithara 🌸"}
 
 
 @pytest.fixture
 def contact(session: Session) -> Contact:
-    contact = Contact(name="Asha", wa_chat_titles=["Asha"])
+    contact = Contact(name="Nithara", wa_chat_titles=["Nithara"])
     session.add(contact)
     session.commit()
     return contact

@@ -50,7 +50,7 @@ ME, THEM = Sender.ME, Sender.CONTACT
 
 @pytest.fixture
 def contact(session: Session) -> Contact:
-    contact = Contact(name="Asha", wa_chat_titles=["Asha"])
+    contact = Contact(name="Nithara", wa_chat_titles=["Nithara"])
     session.add(contact)
     session.commit()
     return contact
