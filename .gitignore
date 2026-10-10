@@ -32,3 +32,7 @@ captures/
 # OS
 .DS_Store
 Thumbs.db
+
+# JVM crash logs (contain local machine details)
+hs_err_pid*.log
+replay_pid*.log
